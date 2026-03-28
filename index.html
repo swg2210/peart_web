@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PÉART — Between Light and Us</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=Noto+Sans+KR:wght@300&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       DESIGN TOKENS
+       GPT 피드백 반영: 차가운 Pure Black → 사진 속 그림자 톤의 Warm Black
+       Gemini 피드백 반영: Champagne White(#e8e2d9)로 빛의 온도 통일
+    ═══════════════════════════════════════════════════════ */
+    :root {
+      --bg:     #0a0908;       /* warm black — 사진 속 그늘 색온도 */
+      --text:   #e8e2d9;       /* champagne white — 하이라이트 빛 온도 */
+      --muted:  rgba(232,226,217,0.28);
+      --accent: #c5a47e;       /* amber — 촛불 온기 */
+      --ease:   cubic-bezier(0.33, 1, 0.68, 1);
+
+      /* Z-axis config */
+      --step: 2200px;          /* 레이어 간 거리 — 산책 호흡감 */
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      /* 개발자 판단: crosshair 제거, 기본 커서 유지
+         Gemini 피드백: 사용 편의성 확보 */
+    }
+
+    /* ── GRAIN TEXTURE ──────────────────────────────────────
+       필름 입자감 — 외부 PNG 없이 SVG filter로 구현
+       mix-blend-mode: screen 으로 사진의 어두운 부분에만 자연스럽게 스며듦 */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9998;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      animation: grain 0.45s steps(2) infinite;
+    }
+    @keyframes grain {
+      0%   { transform: translate(0, 0); }
+      25%  { transform: translate(-1%, -2%); }
+      50%  { transform: translate(2%,  1%); }
+      75%  { transform: translate(-2%, 2%); }
+      100% { transform: translate(1%, -1%); }
+    }
+
+    /* ── AMBIENT LIGHT ──────────────────────────────────────
+       GPT 피드백 반영: 강한 핀조명(Spotlight) 폐기
+       → 마우스 위치에 따라 어둠이 아주 미세하게 걷히는 '은은한 시선'
+       opacity 범위: 0.0(밝음) ~ 0.55(어둠) — 사진 본연의 빛을 방해하지 않는 수준 */
+    #ambience {
+      position: fixed; inset: 0; z-index: 100;
+      pointer-events: none;
+      background: radial-gradient(
+        circle 50vw at var(--mx, 50%) var(--my, 50%),
+        rgba(10, 9, 8, 0.0)  0%,
+        rgba(10, 9, 8, 0.28) 100%
+      ); /* 0.55 → 0.28: 사진 본연의 밝기를 살리되 은은한 비네팅 유지 */
+    }
+
+    /* ── 3D STAGE ───────────────────────────────────────────
+       perspective 적용점 — 사용자가 전시 공간 안에 서 있는 느낌 */
+    #stage {
+      position: fixed; inset: 0;
+    }
+
+    /* ── GALLERY CONTAINER ──────────────────────────────────
+       opacity 전환으로 심도 표현 — 3D translateZ 미사용.
+       will-change: contents — 레이어 내용 변화에 GPU 힌트 */
+    #gallery {
+      position: absolute; inset: 0;
+    }
+
+    /* ── PHOTO LAYERS ───────────────────────────────────────
+       개발자 판단: Gemini 코드는 opacity만으로 심도 표현.
+       실제 translateZ로 3D 배치 → perspective 원근감이 추가되어
+       '걸어 들어가는' 경험이 물리적으로 더 자연스러움. */
+    .layer {
+      position: absolute; inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      /* Gemini 피드백: 블러 완전 제거, 투명도 변화만으로 심도 표현
+         작가의 의도된 초점(선명도)을 web-level 블러가 훼손하지 않도록 */
+      transition: opacity 1.0s var(--ease);
+    }
+
+    /* ── PHOTO FRAME ────────────────────────────────────────
+       GPT 피드백 반영: object-fit: contain — 사진이 절대 잘리지 않음
+       화면 크기에 따른 여백이 '전시장 벽면'처럼 느껴지게 */
+    .photo-wrap {
+      position: relative;
+      max-width: min(88vw, 1000px);
+      max-height: 80vh;
+    }
+
+    .photo-wrap img {
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;     /* 비율 100% 보존 */
+      display: block;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+      /* brightness(1.18): 어두운 사진(4번 해변, 5번 숲)이 웹 화면에서 지나치게
+         눌려 보이는 현상 보정. 작가의 무드는 유지하되 세부 디테일 복원. */
+      filter: brightness(1.18);
+      opacity: 0;
+      transition: opacity 0.9s ease, filter 0.9s ease;
+    }
+
+    .photo-wrap img.loaded { opacity: 1; }
+
+    /* ── CAPTION ────────────────────────────────────────────
+       active 상태일 때만 서서히 올라와 나타남
+       사진을 설명하지 않고, 사진이 말한 뒤 메아리처럼 따라오는 텍스트 */
+    .caption {
+      margin-top: 22px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.9s var(--ease) 0.5s,
+                  transform 0.9s var(--ease) 0.5s;
+    }
+
+    .layer.active .caption {
+      opacity: 0.45;
+      transform: translateY(0);
+    }
+
+    .caption-num {
+      display: none; /* 전역 #counter가 담당 — 중복 제거 */
+    }
+
+    .caption-title {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── VOID LAYER ─────────────────────────────────────────
+       GPT 피드백 반영: 마지막 사진 이후 어둠 속으로 사진이 사라지고
+       PÉART 슬로건이 아주 천천히 fade-in되며 전시를 마무리
+       '암전과 여운' — 전시가 끝났음을 말하지 않고 느끼게 함 */
+    .layer-void {
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .void-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      letter-spacing: 0.4em;
+      color: var(--text);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 2.2s var(--ease) 0.3s,
+                  transform 2.2s var(--ease) 0.3s;
+    }
+
+    .void-slogan {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(0.85rem, 1.8vw, 1.1rem);
+      color: rgba(232,226,217,0.35);
+      letter-spacing: 0.12em;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 2.2s var(--ease) 0.9s,
+                  transform 2.2s var(--ease) 0.9s;
+    }
+
+    .layer-void.active .void-brand,
+    .layer-void.active .void-slogan {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── COUNTER ────────────────────────────────────────────
+       하단 중앙 고정 — 위치감 제공, 존재감은 최소 */
+    #counter {
+      position: fixed;
+      bottom: 30px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: center;
+      font-size: 0.62rem;
+      letter-spacing: 0.35em;
+      color: var(--muted);
+      z-index: 200;
+      transition: opacity 0.6s ease;
+    }
+
+    /* ── INTRO OVERLAY ──────────────────────────────────────
+       전시 입장 전 잠깐의 숨 고르기 — 첫 스크롤 또는 3초 후 사라짐 */
+    #intro {
+      position: fixed; inset: 0; z-index: 500;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 18px;
+      transition: opacity 1.8s var(--ease);
+      pointer-events: auto;
+    }
+
+    #intro.dismissed { opacity: 0; pointer-events: none; }
+
+    .intro-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.4em;
+      color: var(--muted);
+      text-transform: uppercase;
+      opacity: 0;
+      animation: riseIn 1.2s var(--ease) 0.2s forwards;
+    }
+
+    .intro-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(4rem, 10vw, 8rem);
+      letter-spacing: 0.18em;
+      color: var(--text);
+      opacity: 0;
+      animation: riseIn 1.6s var(--ease) 0.5s forwards;
+    }
+
+    .intro-sub {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      color: rgba(232,226,217,0.35);
+      letter-spacing: 0.15em;
+      opacity: 0;
+      animation: riseIn 1.4s var(--ease) 1.0s forwards;
+    }
+
+    .intro-scroll {
+      position: absolute;
+      bottom: 32px;
+      left: 0; right: 0;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 10px;
+      opacity: 0;
+      animation: riseIn 1.0s var(--ease) 2.0s forwards;
+    }
+
+    .intro-scroll span {
+      font-size: 0.58rem;
+      letter-spacing: 0.38em;
+      color: var(--muted);
+    }
+
+    .intro-scroll-bar {
+      width: 1px; height: 38px;
+      background: linear-gradient(to bottom, rgba(232,226,217,0.3), transparent);
+      animation: barPulse 1.8s ease-in-out infinite 2s;
+    }
+
+    @keyframes barPulse {
+      0%, 100% { opacity: 0.35; }
+      50%       { opacity: 0.9;  }
+    }
+
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(14px); filter: blur(7px); }
+      to   { opacity: 1; transform: translateY(0);    filter: blur(0);   }
+    }
+
+    /* ── RESPONSIVE ────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .photo-wrap { max-width: 94vw; max-height: 72vh; }
+      .photo-wrap img { max-height: 72vh; }
+      .intro-brand { letter-spacing: 0.1em; }
+    }
+
+    /* ── REDUCED MOTION ──────────────────────────────────────
+       개발자 필수 구현: 접근성 — 모든 애니메이션 즉시 처리 */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: opacity 0.2s ease !important;
+      }
+      body::after { display: none; }
+      .intro-label, .intro-brand, .intro-sub, .intro-scroll {
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 은은한 앰비언스: 마우스 위치에 따라 어둠이 미세하게 걷힘 -->
+  <div id="ambience"></div>
+
+  <!-- 3D 전시 공간 -->
+  <div id="stage">
+    <div id="gallery">
+
+      <!-- 01. The Vow — 시작과 긴장 -->
+      <div class="layer" data-index="0">
+        <div class="photo-wrap">
+          <img src="./images/peart-01.jpeg" alt="두 손이 반지를 마주 들고 있는 장면 — 약속의 시작" loading="eager">
+        </div>
+        <div class="caption">
+          <p class="caption-num">01 / 05</p>
+          <p class="caption-title">The Vow</p>
+        </div>
+      </div>
+
+      <!-- 02. The Crossing — 교차 -->
+      <div class="layer" data-index="1">
+        <div class="photo-wrap">
+          <img src="./images/peart-02.jpeg" alt="신부와 신랑이 호텔 복도를 함께 걷는 모습" loading="lazy">
+        </div>
+        <div class="caption">
+          <p class="caption-num">02 / 05</p>
+          <p class="caption-title">The Crossing</p>
+        </div>
+      </div>
+
+      <!-- 03. Within the Light — 몰입 -->
+      <div class="layer" data-index="2">
+        <div class="photo-wrap">
+          <img src="./images/peart-03.jpeg" alt="무대 조명 아래 측면에서 바라본 신부 — 별빛처럼 번지는 스팟라이트" loading="lazy">
+        </div>
+        <div class="caption">
+          <p class="caption-num">03 / 05</p>
+          <p class="caption-title">Within the Light</p>
+        </div>
+      </div>
+
+      <!-- 04. The Distance — 거리감과 여운 -->
+      <div class="layer" data-index="3">
+        <div class="photo-wrap">
+          <img src="./images/peart-04.jpeg" alt="어두운 해변, 앉아있는 여성과 지나치는 남성 — 의도적 모션 블러" loading="lazy">
+        </div>
+        <div class="caption">
+          <p class="caption-num">04 / 05</p>
+          <p class="caption-title">The Distance</p>
+        </div>
+      </div>
+
+      <!-- 05. Afterglow — 잔상 -->
+      <div class="layer" data-index="4">
+        <div class="photo-wrap">
+          <img src="./images/peart-05.jpeg" alt="초록 들판, 서로를 안고 있는 두 사람의 뒷모습" loading="lazy">
+        </div>
+        <div class="caption">
+          <p class="caption-num">05 / 05</p>
+          <p class="caption-title">Afterglow</p>
+        </div>
+      </div>
+
+      <!-- VOID — 암전과 여운: 마지막 사진 이후 어둠 속에서 슬로건이 천천히 나타남 -->
+      <div class="layer layer-void" data-index="5">
+        <p class="void-brand">PÉART</p>
+        <p class="void-slogan">The timeless essence of PÉART.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 하단 카운터 -->
+  <div id="counter">01 / 05</div>
+
+  <!-- 인트로 오버레이 — 첫 스크롤 또는 3초 후 사라짐 -->
+  <div id="intro">
+    <span class="intro-label">온라인 전시 · Online Exhibition</span>
+    <h1 class="intro-brand">PÉART</h1>
+    <p class="intro-sub">Between Light and Us</p>
+    <div class="intro-scroll">
+      <span>Scroll</span>
+      <div class="intro-scroll-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════
+       Z-AXIS EXHIBITION ENGINE
+       아키텍처: 카메라(gallery container)가 Z축으로 전진하며
+       각 레이어를 순차 통과 — '걸어 들어가는 전시 공간' 구현
+    ═══════════════════════════════════════════════════════ */
+
+    const STEP      = 1000;   // 가상 Z 단위 (opacity 계산용, 실제 CSS px 아님)
+    const TOTAL     = document.querySelectorAll('.layer').length;
+    const MAX_Z     = (TOTAL - 1) * STEP;
+    const DAMPING   = 0.055; // 감속 계수 — 낮을수록 느리고 우아한 감속
+    const VIS_RANGE = STEP * 0.60; // 전환 선명도 조절: 0.5=날카롭게, 0.8=부드럽게
+
+    const gallery  = document.getElementById('gallery');
+    const layers   = document.querySelectorAll('.layer');
+    const counter  = document.getElementById('counter');
+    const ambience = document.getElementById('ambience');
+    const intro    = document.getElementById('intro');
+
+    let currentZ   = 0;
+    let targetZ    = 0;
+    let introDone  = false;
+
+    /* ── 레이어 Z 배치: 개발자 수정 노트 ──────────────────
+       초기 구현에서 실제 translateZ(-i*STEP)로 3D 배치를 시도했으나,
+       perspective(1200px) < STEP(2200px) 조건에서 이전 레이어들이
+       카메라 뒤로 넘어가 역원근 왜곡 발생 → 이미지 극대화 버그.
+       Gemini 원본처럼 opacity 시뮬레이션 방식으로 복귀.
+       container의 translateZ는 미세한 카메라 전진감만 담당. */
+
+    /* ── 이미지 로드 처리 (blur-up 기법) ─────────────────── */
+    document.querySelectorAll('.photo-wrap img').forEach(img => {
+      const markLoaded = () => img.classList.add('loaded');
+      if (img.complete && img.naturalHeight) markLoaded();
+      else img.addEventListener('load', markLoaded);
+    });
+
+    /* ── 인트로 해제 ──────────────────────────────────────── */
+    function dismissIntro() {
+      if (introDone) return;
+      introDone = true;
+      intro.classList.add('dismissed');
+      setTimeout(() => { intro.style.display = 'none'; }, 1900);
+    }
+    setTimeout(dismissIntro, 3200);
+
+    /* ── 입력: 마우스 휠 ─────────────────────────────────── */
+    window.addEventListener('wheel', (e) => {
+      dismissIntro();
+      /* 감성 의도: 약한 계수(1.2)로 사진이 '쏜살같이' 지나가지 않도록
+         Gemini 피드백: '압도'가 아닌 '산책'의 속도 */
+      targetZ += e.deltaY * 0.6; // STEP 축소(1000)에 맞춰 계수 조정
+      targetZ = Math.max(0, Math.min(MAX_Z, targetZ));
+    }, { passive: true });
+
+    /* ── 입력: 터치 스와이프 (모바일) ───────────────────────
+       GPT 피드백 반영: 스와이프만으로 우아한 작품 전이 */
+    let touchY = null;
+    window.addEventListener('touchstart', (e) => {
+      touchY = e.touches[0].clientY;
+      dismissIntro();
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (touchY === null) return;
+      const dy = touchY - e.touches[0].clientY;
+      targetZ += dy * 1.1; // 터치 계수도 STEP 축소에 맞게 조정
+      targetZ = Math.max(0, Math.min(MAX_Z, targetZ));
+      touchY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => { touchY = null; });
+
+    /* ── 입력: 키보드 ────────────────────────────────────────
+       개발자 추가 (GPT/Gemini 스펙에 없었던 접근성 항목):
+       방향키로 사진 단위 이동 — 장애인 및 키보드 사용자 지원 */
+    window.addEventListener('keydown', (e) => {
+      if (!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(e.key)) return;
+      e.preventDefault();
+      dismissIntro();
+      const current = Math.round(currentZ / STEP);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight')
+        targetZ = Math.min(MAX_Z, (current + 1) * STEP);
+      if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')
+        targetZ = Math.max(0,      (current - 1) * STEP);
+    });
+
+    /* ── 앰비언스 라이트 ─────────────────────────────────────
+       GPT 피드백: 강한 핀조명 → 어둠이 은은하게 걷히는 정도
+       CSS custom property로 마우스 위치 전달 */
+    window.addEventListener('mousemove', (e) => {
+      ambience.style.setProperty('--mx', `${(e.clientX / window.innerWidth  * 100).toFixed(1)}%`);
+      ambience.style.setProperty('--my', `${(e.clientY / window.innerHeight * 100).toFixed(1)}%`);
+    });
+
+    /* ── 렌더 루프 ───────────────────────────────────────────
+       requestAnimationFrame 기반 — transform/opacity만 변경
+       (레이아웃 리플로우 0회) */
+    function render() {
+      /* 부드러운 감속 (exponential ease-out)
+         Gemini 피드백: damping 증가 → 더 느긋하고 우아한 감속 */
+      currentZ += (targetZ - currentZ) * DAMPING;
+
+      /* 카메라 이동 — translateZ 제거: perspective(1200px) < currentZ 조건 발생 시
+         gallery 전체가 소실점 뒤로 넘어가 이미지 불가시 버그.
+         opacity 기반 전환으로 완전 대체. (Gemini 원본 방식 복귀) */
+
+      /* 레이어별 가시성 계산 */
+      let activeIdx = -1;
+
+      layers.forEach((layer, i) => {
+        const dist    = Math.abs(currentZ - i * STEP);
+        const opacity = Math.max(0, 1 - dist / VIS_RANGE);
+
+        layer.style.opacity = opacity;
+
+        if (opacity > 0.62) {
+          if (!layer.classList.contains('active')) layer.classList.add('active');
+          activeIdx = i;
+        } else {
+          layer.classList.remove('active');
+        }
+      });
+
+      /* 카운터 업데이트 */
+      if (activeIdx >= 0 && activeIdx < 5) {
+        counter.textContent  = `${String(activeIdx + 1).padStart(2,'0')} / 05`;
+        counter.style.opacity = '1';
+      } else {
+        /* void 레이어 또는 전환 중엔 카운터 숨김 */
+        counter.style.opacity = '0';
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+</body>
+</html>
