@@ -402,8 +402,8 @@
     const STEP      = 1000;   // 가상 Z 단위 (opacity 계산용, 실제 CSS px 아님)
     const TOTAL     = document.querySelectorAll('.layer').length;
     const MAX_Z     = (TOTAL - 1) * STEP;
-    const DAMPING   = 0.055; // 감속 계수 — 낮을수록 느리고 우아한 감속
-    const VIS_RANGE = STEP * 0.60; // 전환 선명도 조절: 0.5=날카롭게, 0.8=부드럽게
+    const DAMPING   = 0.12;  // 0.055 → 0.12: 빠릿하게 반응, 잔여 모션은 유지
+    const VIS_RANGE = STEP * 0.60;
 
     const gallery  = document.getElementById('gallery');
     const layers   = document.querySelectorAll('.layer');
@@ -443,7 +443,7 @@
       dismissIntro();
       /* 감성 의도: 약한 계수(1.2)로 사진이 '쏜살같이' 지나가지 않도록
          Gemini 피드백: '압도'가 아닌 '산책'의 속도 */
-      targetZ += e.deltaY * 0.6; // STEP 축소(1000)에 맞춰 계수 조정
+      targetZ += e.deltaY * 1.4; // 0.6 → 1.4: 스크롤 한 번에 확실하게 넘어가도록
       targetZ = Math.max(0, Math.min(MAX_Z, targetZ));
     }, { passive: true });
 
@@ -458,7 +458,7 @@
     window.addEventListener('touchmove', (e) => {
       if (touchY === null) return;
       const dy = touchY - e.touches[0].clientY;
-      targetZ += dy * 1.1; // 터치 계수도 STEP 축소에 맞게 조정
+      targetZ += dy * 2.8; // 터치도 같이 올림
       targetZ = Math.max(0, Math.min(MAX_Z, targetZ));
       touchY = e.touches[0].clientY;
     }, { passive: true });
