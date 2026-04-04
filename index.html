@@ -43,33 +43,110 @@
       letter-spacing: -0.01em;
     }
 
-    .header-nav {
-      display: flex;
+    /* PC: 가로 nav */
+    .nav-list {
       list-style: none;
+      display: flex;
+      flex-direction: row;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0;
     }
 
-    .header-nav li::after {
+    .nav-item {
+      position: relative;
+      display: inline;
+    }
+
+    .nav-label::after {
       content: ',\00a0';
-      font-size: 0.72rem;
       opacity: 0.4;
     }
 
-    .header-nav li:last-child::after { content: ''; }
+    .nav-item:last-child .nav-label::after { content: ''; }
 
-    .header-nav a {
+    .nav-label {
       font-size: 0.72rem;
       letter-spacing: 0.02em;
       color: #111;
-      text-decoration: none;
       opacity: 0.5;
+      cursor: pointer;
+      user-select: none;
     }
 
-    .header-nav a:hover { opacity: 1; }
+    .nav-item.open > .nav-label { opacity: 1; }
+
+    /* PC: 하위 카테고리 — nav 바로 아래 */
+    .sub-list {
+      list-style: none;
+      display: none;
+      flex-direction: column;
+      gap: 2px;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      white-space: nowrap;
+    }
+
+    .nav-item.open .sub-list { display: flex; }
+
+    .sub-list a {
+      font-size: 0.65rem;
+      letter-spacing: 0.02em;
+      color: #111;
+      text-decoration: none;
+      opacity: 0.35;
+      display: block;
+    }
+
+    .sub-list a:hover { opacity: 0.7; }
 
     .header-right {
       font-size: 0.72rem;
       letter-spacing: 0.02em;
       opacity: 0.5;
+    }
+
+    /* ── MOBILE: 하단 슬라이드업 바 ── */
+    #mobile-sub-bar {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      #site-header { padding: 20px; }
+
+      /* 모바일에서 PC 드롭다운 숨김 */
+      .sub-list { display: none !important; }
+
+      #mobile-sub-bar {
+        display: block;
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 200;
+        background: #fff;
+        border-top: 1px solid rgba(0,0,0,0.07);
+        padding: 18px 20px 24px;
+        transform: translateY(100%);
+        transition: transform 0.3s cubic-bezier(0.33,1,0.68,1);
+      }
+
+      #mobile-sub-bar.open { transform: translateY(0); }
+
+      #mobile-sub-list {
+        list-style: none;
+        display: flex;
+        gap: 28px;
+      }
+
+      #mobile-sub-list a {
+        font-size: 0.78rem;
+        color: #111;
+        text-decoration: none;
+        opacity: 0.55;
+        white-space: nowrap;
+      }
+
+      #mobile-sub-list a:hover { opacity: 1; }
     }
 
     /* ── PHOTO STAGE ── */
@@ -116,16 +193,32 @@
   <header id="site-header">
     <div class="header-left">
       <span class="header-brand">jinho.kim</span>
-      <nav>
-        <ul class="header-nav">
-          <li><a href="#">Portfolio</a></li>
-          <li><a href="#">Exhibition</a></li>
-          <li><a href="#">About</a></li>
+      <nav id="main-nav">
+        <ul class="nav-list">
+          <li class="nav-item" data-cat="personal">
+            <span class="nav-label">Personal</span>
+            <ul class="sub-list">
+              <li><a href="#">April in Seoul</a></li>
+              <li><a href="#">December in Iceland</a></li>
+            </ul>
+          </li>
+          <li class="nav-item" data-cat="commercial">
+            <span class="nav-label">Commercial</span>
+            <ul class="sub-list">
+              <li><a href="#">Wedding</a></li>
+              <li><a href="#">Space</a></li>
+            </ul>
+          </li>
         </ul>
       </nav>
     </div>
     <span class="header-right">Contact ↗</span>
   </header>
+
+  <!-- 모바일 하단 서브카테고리 바 -->
+  <div id="mobile-sub-bar">
+    <ul id="mobile-sub-list"></ul>
+  </div>
 
   <div id="stage"></div>
 
@@ -208,6 +301,45 @@
     }, { passive: true });
 
     window.addEventListener('touchend', () => { touchX = null; touchAccum = 0; });
+
+    /* ── 카테고리 nav ── */
+    const subData = {
+      personal:   ['April in Seoul', 'December in Iceland'],
+      commercial: ['Wedding', 'Space']
+    };
+    const navItems      = document.querySelectorAll('.nav-item');
+    const mobileSubBar  = document.getElementById('mobile-sub-bar');
+    const mobileSubList = document.getElementById('mobile-sub-list');
+    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+    navItems.forEach(item => {
+      item.querySelector('.nav-label').addEventListener('click', () => {
+        const cat    = item.dataset.cat;
+        const isOpen = item.classList.contains('open');
+
+        if (isMobile()) {
+          const sameOpen = mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
+          navItems.forEach(i => i.classList.remove('open'));
+          if (sameOpen) {
+            mobileSubBar.classList.remove('open');
+          } else {
+            mobileSubBar.dataset.cat = cat;
+            mobileSubBar.classList.add('open');
+            mobileSubList.innerHTML = subData[cat].map(s => `<li><a href="#">${s}</a></li>`).join('');
+          }
+        } else {
+          navItems.forEach(i => i.classList.remove('open'));
+          if (!isOpen) item.classList.add('open');
+        }
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar')) {
+        navItems.forEach(i => i.classList.remove('open'));
+        mobileSubBar.classList.remove('open');
+      }
+    });
 
     window.addEventListener('keydown', e => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
