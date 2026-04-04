@@ -124,35 +124,33 @@
       .sub-list { display: none !important; }
 
       #mobile-sub-bar {
-        display: block;
+        display: none;
         position: fixed;
-        bottom: 0; left: 0; right: 0;
+        left: 20px;
         z-index: 200;
-        background: #fff;
-        border-top: 1px solid rgba(0,0,0,0.07);
-        padding: 18px 20px 24px;
-        transform: translateY(100%);
-        transition: transform 0.3s cubic-bezier(0.33,1,0.68,1);
+        padding: 6px 0 0;
       }
 
-      #mobile-sub-bar.open { transform: translateY(0); }
+      #mobile-sub-bar.open { display: block; }
 
       #mobile-sub-list {
         list-style: none;
         display: flex;
-        gap: 28px;
+        gap: 20px;
       }
 
       #mobile-sub-list a {
-        font-size: 0.78rem;
+        font-size: 0.65rem;
+        letter-spacing: 0.02em;
         color: #111;
         text-decoration: none;
-        opacity: 0.55;
+        opacity: 0.35;
         white-space: nowrap;
       }
 
-      #mobile-sub-list a:hover { opacity: 1; }
+      #mobile-sub-list a:hover { opacity: 0.7; }
       #mobile-sub-list a.active { opacity: 1; }
+
     }
 
     /* ── PHOTO STAGE ── */
@@ -228,6 +226,18 @@
     @media (max-width: 600px) {
       #site-header { padding: 20px; }
       .photo { max-width: 90vw; max-height: 72vh; }
+    }
+
+    @media (max-width: 768px) {
+      #gallery-title {
+        width: 75vw;
+        right: 0;
+        left: auto;
+        padding: 0 20px;
+      }
+      #gallery-title .g-main {
+        font-size: 3rem;
+      }
     }
   </style>
 </head>
@@ -359,6 +369,13 @@
       'Wedding':              '',
       'Space':                ''
     };
+
+    const subDescMobile = {
+      'April in Seoul':       { title: 'April in<br>Seoul', sub: '성수에서 강남까지,<br>서울 거리에서' },
+      'December in Iceland':  { title: 'December in<br>Iceland', sub: '' },
+      'Wedding':              { title: 'Wedding', sub: '' },
+      'Space':                { title: 'Space', sub: '' }
+    };
     const navItems      = document.querySelectorAll('.nav-item');
     const mobileSubBar  = document.getElementById('mobile-sub-bar');
     const mobileSubList = document.getElementById('mobile-sub-list');
@@ -370,8 +387,13 @@
     function enterGallery(title, activeLink) {
       galleryMode = true;
       stage.classList.add('gallery');
-      const desc = subDesc[title] || '';
-      galleryTitle.innerHTML = `<div class="g-main">${title}</div>${desc ? `<div class="g-sub">${desc}</div>` : ''}`;
+      if (isMobile() && subDescMobile[title]) {
+        const m = subDescMobile[title];
+        galleryTitle.innerHTML = `<div class="g-main">${m.title}</div>${m.sub ? `<div class="g-sub">${m.sub}</div>` : ''}`;
+      } else {
+        const desc = subDesc[title] || '';
+        galleryTitle.innerHTML = `<div class="g-main">${title}</div>${desc ? `<div class="g-sub">${desc}</div>` : ''}`;
+      }
       document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
       if (activeLink) activeLink.classList.add('active');
     }
@@ -409,6 +431,8 @@
             mobileSubList.innerHTML = subData[cat].map(s => `<li><a href="#">${s}</a></li>`).join('');
             bindSubLinks(mobileSubList);
             navList.prepend(item);
+            const navRect = document.getElementById('main-nav').getBoundingClientRect();
+            mobileSubBar.style.top = navRect.bottom + 6 + 'px';
             const firstMobileLink = mobileSubList.querySelector('a');
             enterGallery(subData[cat][0], firstMobileLink);
           }
