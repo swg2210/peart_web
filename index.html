@@ -188,14 +188,26 @@
       (e.deltaY > 0 || e.deltaX > 0) ? goTo(current + 1) : goTo(current - 1);
     }, { passive: false });
 
+    /* 터치 — 이동 거리 누적해서 연속 전환 (PC 휠과 동일한 느낌) */
+    const SWIPE_THRESHOLD = 55;
     let touchX = null;
-    window.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
-    window.addEventListener('touchend', e => {
+    let touchAccum = 0;
+
+    window.addEventListener('touchstart', e => {
+      touchX = e.touches[0].clientX;
+      touchAccum = 0;
+    }, { passive: true });
+
+    window.addEventListener('touchmove', e => {
       if (touchX === null) return;
-      const dx = touchX - e.changedTouches[0].clientX;
-      if (Math.abs(dx) > 40) goTo(current + (dx > 0 ? 1 : -1));
-      touchX = null;
-    });
+      const dx = touchX - e.touches[0].clientX;
+      touchX = e.touches[0].clientX;
+      touchAccum += dx;
+      while (touchAccum >=  SWIPE_THRESHOLD) { goTo(current + 1); touchAccum -= SWIPE_THRESHOLD; }
+      while (touchAccum <= -SWIPE_THRESHOLD) { goTo(current - 1); touchAccum += SWIPE_THRESHOLD; }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => { touchX = null; touchAccum = 0; });
 
     window.addEventListener('keydown', e => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
