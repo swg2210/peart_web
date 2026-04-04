@@ -6,7 +6,7 @@
   <title>jinho.kim</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;700&family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -100,12 +100,17 @@
     }
 
     .sub-list a:hover { opacity: 0.7; }
+    .sub-list a.active { opacity: 1; }
 
     .header-right {
       font-size: 0.72rem;
       letter-spacing: 0.02em;
       opacity: 0.5;
+      text-decoration: none;
+      color: #111;
     }
+
+    .header-right:hover { opacity: 1; }
 
     /* ── MOBILE: 하단 슬라이드업 바 ── */
     #mobile-sub-bar {
@@ -147,6 +152,7 @@
       }
 
       #mobile-sub-list a:hover { opacity: 1; }
+      #mobile-sub-list a.active { opacity: 1; }
     }
 
     /* ── PHOTO STAGE ── */
@@ -156,6 +162,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: justify-content 0s;
     }
 
     .photo {
@@ -170,6 +177,42 @@
     }
 
     .photo.active { opacity: 1; }
+
+    /* ── GALLERY MODE ── */
+    #stage.gallery .photo { opacity: 0 !important; }
+
+    #gallery-title {
+      display: none;
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52vw;
+      padding: 0 80px 0 48px;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    #gallery-title .g-main {
+      font-family: 'EB Garamond', serif;
+      font-size: 3.6rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: #111;
+      line-height: 1.05;
+      margin-bottom: 14px;
+    }
+
+    #gallery-title .g-sub {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: #111;
+      opacity: 0.45;
+      letter-spacing: 0.01em;
+    }
+
+    #stage.gallery + #gallery-title { display: block; }
+    #stage.gallery ~ #counter { display: none; }
 
     /* ── COUNTER ── */
     #counter {
@@ -212,7 +255,7 @@
         </ul>
       </nav>
     </div>
-    <span class="header-right">Contact ↗</span>
+    <a class="header-right" href="https://www.instagram.com/__peart?igsh=MTVoaG02NW1qMXJvOQ==" target="_blank" rel="noopener">Contact ↗</a>
   </header>
 
   <!-- 모바일 하단 서브카테고리 바 -->
@@ -221,6 +264,7 @@
   </div>
 
   <div id="stage"></div>
+  <div id="gallery-title"></div>
 
   <div id="counter"></div>
 
@@ -278,6 +322,7 @@
 
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
+      if (galleryMode) return;
       (e.deltaY > 0 || e.deltaX > 0) ? goTo(current + 1) : goTo(current - 1);
     }, { passive: false });
 
@@ -292,7 +337,7 @@
     }, { passive: true });
 
     window.addEventListener('touchmove', e => {
-      if (touchX === null) return;
+      if (touchX === null || galleryMode) return;
       const dx = touchX - e.touches[0].clientX;
       touchX = e.touches[0].clientX;
       touchAccum += dx;
@@ -307,16 +352,52 @@
       personal:   ['April in Seoul', 'December in Iceland'],
       commercial: ['Wedding', 'Space']
     };
+
+    const subDesc = {
+      'April in Seoul':       '성수에서 강남까지, 서울 거리에서',
+      'December in Iceland':  '',
+      'Wedding':              '',
+      'Space':                ''
+    };
     const navItems      = document.querySelectorAll('.nav-item');
     const mobileSubBar  = document.getElementById('mobile-sub-bar');
     const mobileSubList = document.getElementById('mobile-sub-list');
+    const galleryTitle  = document.getElementById('gallery-title');
     const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+    let galleryMode = false;
+
+    function enterGallery(title, activeLink) {
+      galleryMode = true;
+      stage.classList.add('gallery');
+      const desc = subDesc[title] || '';
+      galleryTitle.innerHTML = `<div class="g-main">${title}</div>${desc ? `<div class="g-sub">${desc}</div>` : ''}`;
+      document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
+      if (activeLink) activeLink.classList.add('active');
+    }
+
+    function exitGallery() {
+      galleryMode = false;
+      stage.classList.remove('gallery');
+      galleryTitle.innerHTML = '';
+      document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
+    }
+
+    function bindSubLinks(container) {
+      container.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          enterGallery(a.textContent.trim(), a);
+        });
+      });
+    }
 
     navItems.forEach(item => {
       item.querySelector('.nav-label').addEventListener('click', () => {
         const cat    = item.dataset.cat;
         const isOpen = item.classList.contains('open');
 
+        const navList = document.querySelector('.nav-list');
         if (isMobile()) {
           const sameOpen = mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
           navItems.forEach(i => i.classList.remove('open'));
@@ -326,10 +407,22 @@
             mobileSubBar.dataset.cat = cat;
             mobileSubBar.classList.add('open');
             mobileSubList.innerHTML = subData[cat].map(s => `<li><a href="#">${s}</a></li>`).join('');
+            bindSubLinks(mobileSubList);
+            navList.prepend(item);
+            const firstMobileLink = mobileSubList.querySelector('a');
+            enterGallery(subData[cat][0], firstMobileLink);
           }
         } else {
           navItems.forEach(i => i.classList.remove('open'));
-          if (!isOpen) item.classList.add('open');
+          if (!isOpen) {
+            item.classList.add('open');
+            navList.prepend(item);
+            bindSubLinks(item.querySelector('.sub-list'));
+            const firstLink = item.querySelector('.sub-list a');
+            enterGallery(subData[cat][0], firstLink);
+          } else {
+            exitGallery();
+          }
         }
       });
     });
@@ -338,6 +431,7 @@
       if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar')) {
         navItems.forEach(i => i.classList.remove('open'));
         mobileSubBar.classList.remove('open');
+        exitGallery();
       }
     });
 
