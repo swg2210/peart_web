@@ -126,9 +126,9 @@
       #mobile-sub-bar {
         display: none;
         position: fixed;
-        left: 20px;
+        left: 10px;
         z-index: 200;
-        padding: 6px 0 0;
+        padding: 0;
       }
 
       #mobile-sub-bar.open { display: block; }
@@ -209,8 +209,17 @@
       letter-spacing: 0.01em;
     }
 
-    #stage.gallery + #gallery-title { display: block; }
+    #stage.gallery + #gallery-overlay { display: block; }
+    #stage.gallery ~ #gallery-title { display: block; }
     #stage.gallery ~ #counter { display: none; }
+
+    #gallery-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      cursor: pointer;
+    }
 
     /* ── COUNTER ── */
     #counter {
@@ -230,10 +239,10 @@
 
     @media (max-width: 768px) {
       #gallery-title {
-        width: 75vw;
+        width: 58vw;
         right: 0;
         left: auto;
-        padding: 0 20px;
+        padding: 0 16px;
       }
       #gallery-title .g-main {
         font-size: 3rem;
@@ -274,6 +283,7 @@
   </div>
 
   <div id="stage"></div>
+  <div id="gallery-overlay"></div>
   <div id="gallery-title"></div>
 
   <div id="counter"></div>
@@ -315,11 +325,26 @@
     const photos = Array.from(stage.querySelectorAll('.photo'));
     let current = 0;
     let busy = false;
+    let catPhotoMode = false;
+    let catPhotoIndices = [];
+    let catCurrent = 0;
+    let currentSubName = '';
 
     counter.textContent = `01 / ${String(N).padStart(2,'0')}`;
 
     function goTo(idx) {
       if (busy) return;
+      if (catPhotoMode) {
+        idx = Math.max(0, Math.min(catPhotoIndices.length - 1, idx));
+        if (idx === catCurrent) return;
+        busy = true;
+        photos[catPhotoIndices[catCurrent]].classList.remove('active');
+        photos[catPhotoIndices[idx]].classList.add('active');
+        catCurrent = idx;
+        counter.textContent = `${String(catCurrent + 1).padStart(2,'0')} / ${String(catPhotoIndices.length).padStart(2,'0')}`;
+        setTimeout(() => { busy = false; }, 200);
+        return;
+      }
       idx = Math.max(0, Math.min(N - 1, idx));
       if (idx === current) return;
       busy = true;
@@ -330,10 +355,34 @@
       setTimeout(() => { busy = false; }, 200);
     }
 
+    function enterPhotoMode(subName) {
+      const photoSet = catPhotos[subName] || [];
+      if (!photoSet.length) return;
+      catPhotoMode = true;
+      photos.forEach(p => p.classList.remove('active'));
+      catPhotoIndices = [];
+      photos.forEach((p, i) => {
+        const fname = decodeURIComponent(p.src.split('/').pop());
+        if (photoSet.includes(fname)) catPhotoIndices.push(i);
+      });
+      if (!catPhotoIndices.length) { catPhotoMode = false; return; }
+      catCurrent = 0;
+      photos[catPhotoIndices[0]].classList.add('active');
+      counter.textContent = `01 / ${String(catPhotoIndices.length).padStart(2,'0')}`;
+    }
+
+    function exitPhotoMode() {
+      catPhotoMode = false;
+      photos.forEach(p => p.classList.remove('active'));
+      photos[current].classList.add('active');
+      counter.textContent = `${String(current + 1).padStart(2,'0')} / ${String(N).padStart(2,'0')}`;
+    }
+
     window.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (galleryMode) return;
-      (e.deltaY > 0 || e.deltaX > 0) ? goTo(current + 1) : goTo(current - 1);
+      const idx = catPhotoMode ? catCurrent : current;
+      (e.deltaY > 0 || e.deltaX > 0) ? goTo(idx + 1) : goTo(idx - 1);
     }, { passive: false });
 
     /* 터치 — 이동 거리 누적해서 연속 전환 (PC 휠과 동일한 느낌) */
@@ -351,8 +400,8 @@
       const dx = touchX - e.touches[0].clientX;
       touchX = e.touches[0].clientX;
       touchAccum += dx;
-      while (touchAccum >=  SWIPE_THRESHOLD) { goTo(current + 1); touchAccum -= SWIPE_THRESHOLD; }
-      while (touchAccum <= -SWIPE_THRESHOLD) { goTo(current - 1); touchAccum += SWIPE_THRESHOLD; }
+      while (touchAccum >=  SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) + 1); touchAccum -= SWIPE_THRESHOLD; }
+      while (touchAccum <= -SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) - 1); touchAccum += SWIPE_THRESHOLD; }
     }, { passive: true });
 
     window.addEventListener('touchend', () => { touchX = null; touchAccum = 0; });
@@ -370,6 +419,16 @@
       'Space':                ''
     };
 
+    const catPhotos = {
+      'April in Seoul': [
+        'DSC01006.JPG','DSC01256.JPG','DSC01334.JPG','DSC01957.JPG','DSC02216.JPG',
+        'DSC02393.JPG','DSC02546.JPG','DSC03327.JPG','DSC03858.JPG','DSC03933-2.JPG'
+      ],
+      'December in Iceland': [],
+      'Wedding': [],
+      'Space': []
+    };
+
     const subDescMobile = {
       'April in Seoul':       { title: 'April in<br>Seoul', sub: '성수에서 강남까지,<br>서울 거리에서' },
       'December in Iceland':  { title: 'December in<br>Iceland', sub: '' },
@@ -384,9 +443,20 @@
 
     let galleryMode = false;
 
+    let galleryTimer = null;
+
     function enterGallery(title, activeLink) {
+      currentSubName = title;
       galleryMode = true;
+      catPhotoMode = false;
       stage.classList.add('gallery');
+      clearTimeout(galleryTimer);
+      galleryTimer = setTimeout(() => {
+        if (galleryMode) {
+          exitGallery();
+          enterPhotoMode(title);
+        }
+      }, 2000);
       if (isMobile() && subDescMobile[title]) {
         const m = subDescMobile[title];
         galleryTitle.innerHTML = `<div class="g-main">${m.title}</div>${m.sub ? `<div class="g-sub">${m.sub}</div>` : ''}`;
@@ -399,11 +469,13 @@
     }
 
     function exitGallery() {
+      clearTimeout(galleryTimer);
       galleryMode = false;
       stage.classList.remove('gallery');
       galleryTitle.innerHTML = '';
       document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
     }
+
 
     function bindSubLinks(container) {
       container.querySelectorAll('a').forEach(a => {
@@ -432,7 +504,8 @@
             bindSubLinks(mobileSubList);
             navList.prepend(item);
             const navRect = document.getElementById('main-nav').getBoundingClientRect();
-            mobileSubBar.style.top = navRect.bottom + 6 + 'px';
+            mobileSubBar.style.top = navRect.bottom + 2 + 'px';
+            mobileSubBar.style.left = '10px';
             const firstMobileLink = mobileSubList.querySelector('a');
             enterGallery(subData[cat][0], firstMobileLink);
           }
@@ -452,9 +525,10 @@
     });
 
     document.addEventListener('click', e => {
-      if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar')) {
+      if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar') && !e.target.closest('#gallery-overlay')) {
         navItems.forEach(i => i.classList.remove('open'));
         mobileSubBar.classList.remove('open');
+        if (catPhotoMode) exitPhotoMode();
         exitGallery();
       }
     });
