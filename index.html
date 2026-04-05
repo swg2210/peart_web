@@ -126,7 +126,7 @@
       #mobile-sub-bar {
         display: none;
         position: fixed;
-        left: 10px;
+        left: 20px;
         z-index: 200;
         padding: 0;
       }
@@ -239,13 +239,19 @@
 
     @media (max-width: 768px) {
       #gallery-title {
-        width: 58vw;
-        right: 0;
-        left: auto;
-        padding: 0 16px;
+        width: 90vw;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%) translateY(-50%);
+        padding: 0;
+        text-align: center;
       }
       #gallery-title .g-main {
-        font-size: 3rem;
+        font-size: 2.4rem;
+        white-space: nowrap;
+      }
+      #gallery-title .g-sub {
+        white-space: nowrap;
       }
     }
   </style>
@@ -261,7 +267,7 @@
             <span class="nav-label">Personal</span>
             <ul class="sub-list">
               <li><a href="#">April in Seoul</a></li>
-              <li><a href="#">December in Iceland</a></li>
+              <li><a href="#">December in Island</a></li>
             </ul>
           </li>
           <li class="nav-item" data-cat="commercial">
@@ -408,13 +414,13 @@
 
     /* ── 카테고리 nav ── */
     const subData = {
-      personal:   ['April in Seoul', 'December in Iceland'],
+      personal:   ['April in Seoul', 'December in Island'],
       commercial: ['Wedding', 'Space']
     };
 
     const subDesc = {
       'April in Seoul':       '성수에서 강남까지, 서울 거리에서',
-      'December in Iceland':  '',
+      'December in Island':   '12월 겨울, 아이슬란드 오로라를 찾아서',
       'Wedding':              '',
       'Space':                ''
     };
@@ -424,16 +430,20 @@
         'DSC01006.JPG','DSC01256.JPG','DSC01334.JPG','DSC01957.JPG','DSC02216.JPG',
         'DSC02393.JPG','DSC02546.JPG','DSC03327.JPG','DSC03858.JPG','DSC03933-2.JPG'
       ],
-      'December in Iceland': [],
+      'December in Island': [
+        'DSC00767.JPG','DSC01018.JPG','DSC01339.JPG','DSC02414.JPG','DSC02729.JPG',
+        'DSC03336.JPG','DSC03417.JPG','DSC03877.JPG','IMG_9481.JPG',
+        '098DE0F3-54EF-4637-AE30-C47B0A97048F.JPG'
+      ],
       'Wedding': [],
       'Space': []
     };
 
     const subDescMobile = {
-      'April in Seoul':       { title: 'April in<br>Seoul', sub: '성수에서 강남까지,<br>서울 거리에서' },
-      'December in Iceland':  { title: 'December in<br>Iceland', sub: '' },
-      'Wedding':              { title: 'Wedding', sub: '' },
-      'Space':                { title: 'Space', sub: '' }
+      'April in Seoul':      { title: 'April in Seoul', sub: '성수에서 강남까지, 서울 거리에서' },
+      'December in Island':  { title: 'December in Island', sub: '12월 겨울, 아이슬란드 오로라를 찾아서' },
+      'Wedding':             { title: 'Wedding', sub: '' },
+      'Space':               { title: 'Space', sub: '' }
     };
     const navItems      = document.querySelectorAll('.nav-item');
     const mobileSubBar  = document.getElementById('mobile-sub-bar');
@@ -442,19 +452,22 @@
     const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
     let galleryMode = false;
-
+    let currentActiveLink = null;
     let galleryTimer = null;
 
     function enterGallery(title, activeLink) {
       currentSubName = title;
+      currentActiveLink = activeLink;
       galleryMode = true;
       catPhotoMode = false;
       stage.classList.add('gallery');
       clearTimeout(galleryTimer);
       galleryTimer = setTimeout(() => {
         if (galleryMode) {
+          const link = currentActiveLink;
           exitGallery();
           enterPhotoMode(title);
+          if (link) link.classList.add('active');
         }
       }, 2000);
       if (isMobile() && subDescMobile[title]) {
@@ -504,8 +517,8 @@
             bindSubLinks(mobileSubList);
             navList.prepend(item);
             const navRect = document.getElementById('main-nav').getBoundingClientRect();
-            mobileSubBar.style.top = navRect.bottom + 2 + 'px';
-            mobileSubBar.style.left = '10px';
+            mobileSubBar.style.top = navRect.bottom + 1 + 'px';
+            mobileSubBar.style.left = navRect.left + 'px';
             const firstMobileLink = mobileSubList.querySelector('a');
             enterGallery(subData[cat][0], firstMobileLink);
           }

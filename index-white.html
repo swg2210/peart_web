@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>jinho.kim</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=Noto+Sans+KR:wght@300;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:   #ffffff;
+      --text: #111111;
+      --ease: cubic-bezier(0.33, 1, 0.68, 1);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+    }
+
+
+    /* ── HEADER ── */
+    #site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 24px 36px;
+      z-index: 6000;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .header-brand {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .header-nav {
+      display: flex;
+      list-style: none;
+    }
+
+    .header-nav li::after {
+      content: ',\00a0';
+      font-size: 0.72rem;
+      opacity: 0.5;
+    }
+
+    .header-nav li:last-child::after { content: ''; }
+
+    .header-nav a {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      text-decoration: none;
+      opacity: 0.6;
+    }
+
+    .header-nav a:hover { opacity: 1; }
+
+    .header-right {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      opacity: 0.6;
+    }
+
+    /* ── INTRO ── */
+    #intro {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+    }
+
+    .intro-frame {
+      width: 100%;
+      max-width: 460px;
+      padding: 20px;
+    }
+
+    .intro-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      box-shadow: none;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .intro-frame { max-width: 90vw; }
+      #site-header { padding: 20px 20px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header id="site-header">
+    <div class="header-left">
+      <span class="header-brand">jinho.kim</span>
+      <nav>
+        <ul class="header-nav">
+          <li><a href="#">Portfolio</a></li>
+          <li><a href="#">Exhibition</a></li>
+          <li><a href="#">About</a></li>
+        </ul>
+      </nav>
+    </div>
+    <span class="header-right">Contact ↗</span>
+  </header>
+
+  <div id="intro">
+    <div class="intro-frame">
+      <img src="./images/intro-cover.jpg" alt="jinho.kim" class="intro-img">
+    </div>
+  </div>
+
+</body>
+</html>
