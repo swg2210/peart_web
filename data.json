@@ -1,0 +1,94 @@
+{
+  "allPhotos": [
+    "./images/intro-cover.JPG",
+    "./images/098DE0F3-54EF-4637-AE30-C47B0A97048F.JPG",
+    "./images/22FA7B59-0450-4CCA-9E02-85496CA06066.JPG",
+    "./images/395577AD-ABA3-4C88-9E13-B53F79D32834.JPG",
+    "./images/6D55E0DF-18FB-427A-A7F1-496689AD6CE8.JPG",
+    "./images/88F17B32-5C41-4B35-AAE7-870BCC81E98D.JPG",
+    "./images/DSC00767.JPG",
+    "./images/DSC01006.JPG",
+    "./images/DSC01018.JPG",
+    "./images/DSC01256.JPG",
+    "./images/DSC01334.JPG",
+    "./images/DSC01339.JPG",
+    "./images/DSC01957.JPG",
+    "./images/DSC02216.JPG",
+    "./images/DSC02393.JPG",
+    "./images/DSC02414.JPG",
+    "./images/DSC02546.JPG",
+    "./images/DSC02729.JPG",
+    "./images/DSC03327.JPG",
+    "./images/DSC03336.JPG",
+    "./images/DSC03417.JPG",
+    "./images/DSC03858.JPG",
+    "./images/DSC03877.JPG",
+    "./images/DSC03933-2.JPG",
+    "./images/E83CD9E7-D748-457F-9D63-940DF73708B8.JPG",
+    "./images/IMG_9481.JPG"
+  ],
+  "categories": [
+    {
+      "id": "personal",
+      "label": "Personal",
+      "subcategories": [
+        {
+          "id": "april-in-seoul",
+          "name": "April in Seoul",
+          "title": "April in Seoul",
+          "subtitle": "성수에서 강남까지, 서울 거리에서",
+          "photos": [
+            "./images/DSC01006.JPG",
+            "./images/DSC01256.JPG",
+            "./images/DSC01334.JPG",
+            "./images/DSC01957.JPG",
+            "./images/DSC02216.JPG",
+            "./images/DSC02393.JPG",
+            "./images/DSC02546.JPG",
+            "./images/DSC03327.JPG",
+            "./images/DSC03858.JPG",
+            "./images/DSC03933-2.JPG"
+          ]
+        },
+        {
+          "id": "december-in-island",
+          "name": "December in Island",
+          "title": "December in Island",
+          "subtitle": "12월 겨울, 아이슬란드 오로라를 찾아서",
+          "photos": [
+            "./images/DSC00767.JPG",
+            "./images/DSC01018.JPG",
+            "./images/DSC01339.JPG",
+            "./images/DSC02414.JPG",
+            "./images/DSC02729.JPG",
+            "./images/DSC03336.JPG",
+            "./images/DSC03417.JPG",
+            "./images/DSC03877.JPG",
+            "./images/IMG_9481.JPG",
+            "./images/098DE0F3-54EF-4637-AE30-C47B0A97048F.JPG"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "commercial",
+      "label": "Commercial",
+      "subcategories": [
+        {
+          "id": "wedding",
+          "name": "Wedding",
+          "title": "Wedding",
+          "subtitle": "",
+          "photos": []
+        },
+        {
+          "id": "space",
+          "name": "Space",
+          "title": "Space",
+          "subtitle": "",
+          "photos": []
+        }
+      ]
+    }
+  ]
+}

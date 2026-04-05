@@ -43,7 +43,6 @@
       letter-spacing: -0.01em;
     }
 
-    /* PC: 가로 nav */
     .nav-list {
       list-style: none;
       display: flex;
@@ -76,7 +75,6 @@
 
     .nav-item.open > .nav-label { opacity: 1; }
 
-    /* PC: 하위 카테고리 — nav 바로 아래 */
     .sub-list {
       list-style: none;
       display: none;
@@ -112,15 +110,11 @@
 
     .header-right:hover { opacity: 1; }
 
-    /* ── MOBILE: 하단 슬라이드업 바 ── */
-    #mobile-sub-bar {
-      display: none;
-    }
+    /* ── MOBILE ── */
+    #mobile-sub-bar { display: none; }
 
     @media (max-width: 768px) {
       #site-header { padding: 20px; }
-
-      /* 모바일에서 PC 드롭다운 숨김 */
       .sub-list { display: none !important; }
 
       #mobile-sub-bar {
@@ -150,7 +144,6 @@
 
       #mobile-sub-list a:hover { opacity: 0.7; }
       #mobile-sub-list a.active { opacity: 1; }
-
     }
 
     /* ── PHOTO STAGE ── */
@@ -160,7 +153,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: justify-content 0s;
     }
 
     .photo {
@@ -210,8 +202,8 @@
     }
 
     #stage.gallery + #gallery-overlay { display: block; }
-    #stage.gallery ~ #gallery-title { display: block; }
-    #stage.gallery ~ #counter { display: none; }
+    #stage.gallery ~ #gallery-title   { display: block; }
+    #stage.gallery ~ #counter         { display: none; }
 
     #gallery-overlay {
       display: none;
@@ -233,7 +225,6 @@
     }
 
     @media (max-width: 600px) {
-      #site-header { padding: 20px; }
       .photo { max-width: 90vw; max-height: 72vh; }
     }
 
@@ -246,13 +237,8 @@
         padding: 0;
         text-align: center;
       }
-      #gallery-title .g-main {
-        font-size: 2.4rem;
-        white-space: nowrap;
-      }
-      #gallery-title .g-sub {
-        white-space: nowrap;
-      }
+      #gallery-title .g-main { font-size: 2.4rem; white-space: nowrap; }
+      #gallery-title .g-sub  { white-space: nowrap; }
     }
   </style>
 </head>
@@ -262,28 +248,12 @@
     <div class="header-left">
       <span class="header-brand">jinho.kim</span>
       <nav id="main-nav">
-        <ul class="nav-list">
-          <li class="nav-item" data-cat="personal">
-            <span class="nav-label">Personal</span>
-            <ul class="sub-list">
-              <li><a href="#">April in Seoul</a></li>
-              <li><a href="#">December in Island</a></li>
-            </ul>
-          </li>
-          <li class="nav-item" data-cat="commercial">
-            <span class="nav-label">Commercial</span>
-            <ul class="sub-list">
-              <li><a href="#">Wedding</a></li>
-              <li><a href="#">Space</a></li>
-            </ul>
-          </li>
-        </ul>
+        <ul class="nav-list" id="nav-list"></ul>
       </nav>
     </div>
     <a class="header-right" href="https://www.instagram.com/__peart?igsh=MTVoaG02NW1qMXJvOQ==" target="_blank" rel="noopener">Contact ↗</a>
   </header>
 
-  <!-- 모바일 하단 서브카테고리 바 -->
   <div id="mobile-sub-bar">
     <ul id="mobile-sub-list"></ul>
   </div>
@@ -291,265 +261,257 @@
   <div id="stage"></div>
   <div id="gallery-overlay"></div>
   <div id="gallery-title"></div>
-
   <div id="counter"></div>
 
   <script>
-    const others = [
-      '098DE0F3-54EF-4637-AE30-C47B0A97048F.JPG',
-      '22FA7B59-0450-4CCA-9E02-85496CA06066.JPG',
-      '395577AD-ABA3-4C88-9E13-B53F79D32834.JPG',
-      '6D55E0DF-18FB-427A-A7F1-496689AD6CE8.JPG',
-      '88F17B32-5C41-4B35-AAE7-870BCC81E98D.JPG',
-      'DSC00767.JPG','DSC01006.JPG','DSC01018.JPG','DSC01256.JPG',
-      'DSC01334.JPG','DSC01339.JPG','DSC01957.JPG','DSC02216.JPG',
-      'DSC02393.JPG','DSC02414.JPG','DSC02546.JPG','DSC02729.JPG',
-      'DSC03327.JPG','DSC03336.JPG','DSC03417.JPG','DSC03858.JPG',
-      'DSC03877.JPG','DSC03933-2.JPG',
-      'E83CD9E7-D748-457F-9D63-940DF73708B8.JPG','IMG_9481.JPG'
-    ];
-
-    /* 셔플 */
-    for (let i = others.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [others[i], others[j]] = [others[j], others[i]];
-    }
-
-    const all = ['intro-cover.JPG', ...others];
-    const stage   = document.getElementById('stage');
-    const counter = document.getElementById('counter');
-    const N = all.length;
-
-    all.forEach((name, i) => {
-      const img = document.createElement('img');
-      img.className = 'photo' + (i === 0 ? ' active' : '');
-      img.src = `./images/${name}`;
-      img.alt = '';
-      stage.appendChild(img);
-    });
-
-    const photos = Array.from(stage.querySelectorAll('.photo'));
-    let current = 0;
-    let busy = false;
-    let catPhotoMode = false;
-    let catPhotoIndices = [];
-    let catCurrent = 0;
-    let currentSubName = '';
-
-    counter.textContent = `01 / ${String(N).padStart(2,'0')}`;
-
-    function goTo(idx) {
-      if (busy) return;
-      if (catPhotoMode) {
-        idx = Math.max(0, Math.min(catPhotoIndices.length - 1, idx));
-        if (idx === catCurrent) return;
-        busy = true;
-        photos[catPhotoIndices[catCurrent]].classList.remove('active');
-        photos[catPhotoIndices[idx]].classList.add('active');
-        catCurrent = idx;
-        counter.textContent = `${String(catCurrent + 1).padStart(2,'0')} / ${String(catPhotoIndices.length).padStart(2,'0')}`;
-        setTimeout(() => { busy = false; }, 200);
+    (async () => {
+      // ── data.json 로드 ──
+      let siteData;
+      try {
+        const res = await fetch('./data.json?t=' + Date.now());
+        siteData = await res.json();
+      } catch (e) {
+        console.error('data.json 로드 실패', e);
         return;
       }
-      idx = Math.max(0, Math.min(N - 1, idx));
-      if (idx === current) return;
-      busy = true;
-      photos[current].classList.remove('active');
-      photos[idx].classList.add('active');
-      current = idx;
-      counter.textContent = `${String(current + 1).padStart(2,'0')} / ${String(N).padStart(2,'0')}`;
-      setTimeout(() => { busy = false; }, 200);
-    }
 
-    function enterPhotoMode(subName) {
-      const photoSet = catPhotos[subName] || [];
-      if (!photoSet.length) return;
-      catPhotoMode = true;
-      photos.forEach(p => p.classList.remove('active'));
-      catPhotoIndices = [];
-      photos.forEach((p, i) => {
-        const fname = decodeURIComponent(p.src.split('/').pop());
-        if (photoSet.includes(fname)) catPhotoIndices.push(i);
-      });
-      if (!catPhotoIndices.length) { catPhotoMode = false; return; }
-      catCurrent = 0;
-      photos[catPhotoIndices[0]].classList.add('active');
-      counter.textContent = `01 / ${String(catPhotoIndices.length).padStart(2,'0')}`;
-    }
+      const { allPhotos, categories } = siteData;
 
-    function exitPhotoMode() {
-      catPhotoMode = false;
-      photos.forEach(p => p.classList.remove('active'));
-      photos[current].classList.add('active');
-      counter.textContent = `${String(current + 1).padStart(2,'0')} / ${String(N).padStart(2,'0')}`;
-    }
-
-    window.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      if (galleryMode) return;
-      const idx = catPhotoMode ? catCurrent : current;
-      (e.deltaY > 0 || e.deltaX > 0) ? goTo(idx + 1) : goTo(idx - 1);
-    }, { passive: false });
-
-    /* 터치 — 이동 거리 누적해서 연속 전환 (PC 휠과 동일한 느낌) */
-    const SWIPE_THRESHOLD = 55;
-    let touchX = null;
-    let touchAccum = 0;
-
-    window.addEventListener('touchstart', e => {
-      touchX = e.touches[0].clientX;
-      touchAccum = 0;
-    }, { passive: true });
-
-    window.addEventListener('touchmove', e => {
-      if (touchX === null || galleryMode) return;
-      const dx = touchX - e.touches[0].clientX;
-      touchX = e.touches[0].clientX;
-      touchAccum += dx;
-      while (touchAccum >=  SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) + 1); touchAccum -= SWIPE_THRESHOLD; }
-      while (touchAccum <= -SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) - 1); touchAccum += SWIPE_THRESHOLD; }
-    }, { passive: true });
-
-    window.addEventListener('touchend', () => { touchX = null; touchAccum = 0; });
-
-    /* ── 카테고리 nav ── */
-    const subData = {
-      personal:   ['April in Seoul', 'December in Island'],
-      commercial: ['Wedding', 'Space']
-    };
-
-    const subDesc = {
-      'April in Seoul':       '성수에서 강남까지, 서울 거리에서',
-      'December in Island':   '12월 겨울, 아이슬란드 오로라를 찾아서',
-      'Wedding':              '',
-      'Space':                ''
-    };
-
-    const catPhotos = {
-      'April in Seoul': [
-        'DSC01006.JPG','DSC01256.JPG','DSC01334.JPG','DSC01957.JPG','DSC02216.JPG',
-        'DSC02393.JPG','DSC02546.JPG','DSC03327.JPG','DSC03858.JPG','DSC03933-2.JPG'
-      ],
-      'December in Island': [
-        'DSC00767.JPG','DSC01018.JPG','DSC01339.JPG','DSC02414.JPG','DSC02729.JPG',
-        'DSC03336.JPG','DSC03417.JPG','DSC03877.JPG','IMG_9481.JPG',
-        '098DE0F3-54EF-4637-AE30-C47B0A97048F.JPG'
-      ],
-      'Wedding': [],
-      'Space': []
-    };
-
-    const subDescMobile = {
-      'April in Seoul':      { title: 'April in Seoul', sub: '성수에서 강남까지, 서울 거리에서' },
-      'December in Island':  { title: 'December in Island', sub: '12월 겨울, 아이슬란드 오로라를 찾아서' },
-      'Wedding':             { title: 'Wedding', sub: '' },
-      'Space':               { title: 'Space', sub: '' }
-    };
-    const navItems      = document.querySelectorAll('.nav-item');
-    const mobileSubBar  = document.getElementById('mobile-sub-bar');
-    const mobileSubList = document.getElementById('mobile-sub-list');
-    const galleryTitle  = document.getElementById('gallery-title');
-    const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
-
-    let galleryMode = false;
-    let currentActiveLink = null;
-    let galleryTimer = null;
-
-    function enterGallery(title, activeLink) {
-      currentSubName = title;
-      currentActiveLink = activeLink;
-      galleryMode = true;
-      catPhotoMode = false;
-      stage.classList.add('gallery');
-      clearTimeout(galleryTimer);
-      galleryTimer = setTimeout(() => {
-        if (galleryMode) {
-          const link = currentActiveLink;
-          exitGallery();
-          enterPhotoMode(title);
-          if (link) link.classList.add('active');
-        }
-      }, 2000);
-      if (isMobile() && subDescMobile[title]) {
-        const m = subDescMobile[title];
-        galleryTitle.innerHTML = `<div class="g-main">${m.title}</div>${m.sub ? `<div class="g-sub">${m.sub}</div>` : ''}`;
-      } else {
-        const desc = subDesc[title] || '';
-        galleryTitle.innerHTML = `<div class="g-main">${title}</div>${desc ? `<div class="g-sub">${desc}</div>` : ''}`;
+      // ── 포토 스테이지 구성 (intro-cover 첫 번째, 나머지 셔플) ──
+      const introPhoto = allPhotos[0];
+      const rest = allPhotos.slice(1);
+      for (let i = rest.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rest[i], rest[j]] = [rest[j], rest[i]];
       }
-      document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
-      if (activeLink) activeLink.classList.add('active');
-    }
+      const all = [introPhoto, ...rest];
+      const N = all.length;
 
-    function exitGallery() {
-      clearTimeout(galleryTimer);
-      galleryMode = false;
-      stage.classList.remove('gallery');
-      galleryTitle.innerHTML = '';
-      document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
-    }
+      const stage   = document.getElementById('stage');
+      const counter = document.getElementById('counter');
 
+      all.forEach((src, i) => {
+        const img = document.createElement('img');
+        img.className = 'photo' + (i === 0 ? ' active' : '');
+        img.src = src;
+        img.alt = '';
+        stage.appendChild(img);
+      });
 
-    function bindSubLinks(container) {
-      container.querySelectorAll('a').forEach(a => {
-        a.addEventListener('click', e => {
-          e.preventDefault();
-          enterGallery(a.textContent.trim(), a);
+      const photos = Array.from(stage.querySelectorAll('.photo'));
+      let current = 0;
+      let busy = false;
+      let catPhotoMode = false;
+      let catPhotoIndices = [];
+      let catCurrent = 0;
+
+      counter.textContent = `01 / ${String(N).padStart(2, '0')}`;
+
+      // ── 카테고리 데이터 맵 ──
+      const subDataMap   = {};  // catId -> [subName, ...]
+      const subInfoMap   = {};  // subName -> { title, subtitle }
+      const catPhotosMap = {};  // subName -> [photoSrc, ...]
+
+      categories.forEach(cat => {
+        subDataMap[cat.id] = cat.subcategories.map(s => s.name);
+        cat.subcategories.forEach(sub => {
+          subInfoMap[sub.name]   = { title: sub.title, subtitle: sub.subtitle };
+          catPhotosMap[sub.name] = sub.photos;
         });
       });
-    }
 
-    navItems.forEach(item => {
-      item.querySelector('.nav-label').addEventListener('click', () => {
-        const cat    = item.dataset.cat;
-        const isOpen = item.classList.contains('open');
+      // ── Nav 동적 생성 ──
+      const navList = document.getElementById('nav-list');
+      categories.forEach(cat => {
+        const li = document.createElement('li');
+        li.className = 'nav-item';
+        li.dataset.cat = cat.id;
+        li.innerHTML = `
+          <span class="nav-label">${cat.label}</span>
+          <ul class="sub-list">
+            ${cat.subcategories.map(s => `<li><a href="#">${s.name}</a></li>`).join('')}
+          </ul>`;
+        navList.appendChild(li);
+      });
 
-        const navList = document.querySelector('.nav-list');
-        if (isMobile()) {
-          const sameOpen = mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
-          navItems.forEach(i => i.classList.remove('open'));
-          if (sameOpen) {
-            mobileSubBar.classList.remove('open');
-          } else {
-            mobileSubBar.dataset.cat = cat;
-            mobileSubBar.classList.add('open');
-            mobileSubList.innerHTML = subData[cat].map(s => `<li><a href="#">${s}</a></li>`).join('');
-            bindSubLinks(mobileSubList);
-            navList.prepend(item);
-            const navRect = document.getElementById('main-nav').getBoundingClientRect();
-            mobileSubBar.style.top = navRect.bottom + 1 + 'px';
-            mobileSubBar.style.left = navRect.left + 'px';
-            const firstMobileLink = mobileSubList.querySelector('a');
-            enterGallery(subData[cat][0], firstMobileLink);
+      // ── 포토 전환 ──
+      function goTo(idx) {
+        if (busy) return;
+        if (catPhotoMode) {
+          idx = Math.max(0, Math.min(catPhotoIndices.length - 1, idx));
+          if (idx === catCurrent) return;
+          busy = true;
+          photos[catPhotoIndices[catCurrent]].classList.remove('active');
+          photos[catPhotoIndices[idx]].classList.add('active');
+          catCurrent = idx;
+          counter.textContent = `${String(catCurrent + 1).padStart(2, '0')} / ${String(catPhotoIndices.length).padStart(2, '0')}`;
+          setTimeout(() => { busy = false; }, 200);
+          return;
+        }
+        idx = Math.max(0, Math.min(N - 1, idx));
+        if (idx === current) return;
+        busy = true;
+        photos[current].classList.remove('active');
+        photos[idx].classList.add('active');
+        current = idx;
+        counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
+        setTimeout(() => { busy = false; }, 200);
+      }
+
+      function enterPhotoMode(subName) {
+        const photoSet = catPhotosMap[subName] || [];
+        if (!photoSet.length) return;
+        catPhotoMode = true;
+        photos.forEach(p => p.classList.remove('active'));
+        catPhotoIndices = [];
+        photos.forEach((p, i) => {
+          const psrc = decodeURIComponent(p.src);
+          if (photoSet.some(ps => {
+            const normalized = ps.startsWith('http') ? ps : ps.replace('./', '');
+            return psrc.endsWith(normalized) || psrc.includes(normalized);
+          })) {
+            catPhotoIndices.push(i);
           }
-        } else {
-          navItems.forEach(i => i.classList.remove('open'));
-          if (!isOpen) {
-            item.classList.add('open');
-            navList.prepend(item);
-            bindSubLinks(item.querySelector('.sub-list'));
-            const firstLink = item.querySelector('.sub-list a');
-            enterGallery(subData[cat][0], firstLink);
-          } else {
+        });
+        if (!catPhotoIndices.length) { catPhotoMode = false; return; }
+        catCurrent = 0;
+        photos[catPhotoIndices[0]].classList.add('active');
+        counter.textContent = `01 / ${String(catPhotoIndices.length).padStart(2, '0')}`;
+      }
+
+      function exitPhotoMode() {
+        catPhotoMode = false;
+        photos.forEach(p => p.classList.remove('active'));
+        photos[current].classList.add('active');
+        counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
+      }
+
+      // ── 스크롤 / 스와이프 ──
+      window.addEventListener('wheel', e => {
+        e.preventDefault();
+        if (galleryMode) return;
+        const idx = catPhotoMode ? catCurrent : current;
+        (e.deltaY > 0 || e.deltaX > 0) ? goTo(idx + 1) : goTo(idx - 1);
+      }, { passive: false });
+
+      const SWIPE_THRESHOLD = 55;
+      let touchX = null, touchAccum = 0;
+
+      window.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; touchAccum = 0; }, { passive: true });
+      window.addEventListener('touchmove', e => {
+        if (touchX === null || galleryMode) return;
+        const dx = touchX - e.touches[0].clientX;
+        touchX = e.touches[0].clientX;
+        touchAccum += dx;
+        while (touchAccum >=  SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) + 1); touchAccum -= SWIPE_THRESHOLD; }
+        while (touchAccum <= -SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) - 1); touchAccum += SWIPE_THRESHOLD; }
+      }, { passive: true });
+      window.addEventListener('touchend', () => { touchX = null; touchAccum = 0; });
+
+      // ── 갤러리 모드 ──
+      const mobileSubBar  = document.getElementById('mobile-sub-bar');
+      const mobileSubList = document.getElementById('mobile-sub-list');
+      const galleryTitle  = document.getElementById('gallery-title');
+      const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+
+      let galleryMode = false;
+      let currentActiveLink = null;
+      let galleryTimer = null;
+
+      function enterGallery(title, activeLink) {
+        currentActiveLink = activeLink;
+        galleryMode = true;
+        catPhotoMode = false;
+        stage.classList.add('gallery');
+        clearTimeout(galleryTimer);
+        galleryTimer = setTimeout(() => {
+          if (galleryMode) {
+            const link = currentActiveLink;
             exitGallery();
+            enterPhotoMode(title);
+            if (link) link.classList.add('active');
           }
+        }, 2000);
+
+        const info = subInfoMap[title] || {};
+        const displayTitle = info.title || title;
+        const displaySub   = info.subtitle || '';
+        galleryTitle.innerHTML = `<div class="g-main">${displayTitle}</div>${displaySub ? `<div class="g-sub">${displaySub}</div>` : ''}`;
+
+        document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
+        if (activeLink) activeLink.classList.add('active');
+      }
+
+      function exitGallery() {
+        clearTimeout(galleryTimer);
+        galleryMode = false;
+        stage.classList.remove('gallery');
+        galleryTitle.innerHTML = '';
+        document.querySelectorAll('.sub-list a, #mobile-sub-list a').forEach(a => a.classList.remove('active'));
+      }
+
+      function bindSubLinks(container) {
+        container.querySelectorAll('a').forEach(a => {
+          a.addEventListener('click', e => {
+            e.preventDefault();
+            enterGallery(a.textContent.trim(), a);
+          });
+        });
+      }
+
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        item.querySelector('.nav-label').addEventListener('click', () => {
+          const cat    = item.dataset.cat;
+          const isOpen = item.classList.contains('open');
+          const navListEl = document.querySelector('.nav-list');
+
+          if (isMobile()) {
+            const sameOpen = mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
+            navItems.forEach(i => i.classList.remove('open'));
+            if (sameOpen) {
+              mobileSubBar.classList.remove('open');
+            } else {
+              mobileSubBar.dataset.cat = cat;
+              mobileSubBar.classList.add('open');
+              mobileSubList.innerHTML = (subDataMap[cat] || []).map(s => `<li><a href="#">${s}</a></li>`).join('');
+              bindSubLinks(mobileSubList);
+              navListEl.prepend(item);
+              const navRect = document.getElementById('main-nav').getBoundingClientRect();
+              mobileSubBar.style.top  = navRect.bottom + 1 + 'px';
+              mobileSubBar.style.left = navRect.left + 'px';
+              const firstLink = mobileSubList.querySelector('a');
+              if (subDataMap[cat] && subDataMap[cat].length) enterGallery(subDataMap[cat][0], firstLink);
+            }
+          } else {
+            navItems.forEach(i => i.classList.remove('open'));
+            if (!isOpen) {
+              item.classList.add('open');
+              navListEl.prepend(item);
+              bindSubLinks(item.querySelector('.sub-list'));
+              const firstLink = item.querySelector('.sub-list a');
+              if (subDataMap[cat] && subDataMap[cat].length) enterGallery(subDataMap[cat][0], firstLink);
+            } else {
+              exitGallery();
+            }
+          }
+        });
+      });
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar') && !e.target.closest('#gallery-overlay')) {
+          navItems.forEach(i => i.classList.remove('open'));
+          mobileSubBar.classList.remove('open');
+          if (catPhotoMode) exitPhotoMode();
+          exitGallery();
         }
       });
-    });
 
-    document.addEventListener('click', e => {
-      if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar') && !e.target.closest('#gallery-overlay')) {
-        navItems.forEach(i => i.classList.remove('open'));
-        mobileSubBar.classList.remove('open');
-        if (catPhotoMode) exitPhotoMode();
-        exitGallery();
-      }
-    });
-
-    window.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(current + 1);
-      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(current - 1);
-    });
+      window.addEventListener('keydown', e => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo((catPhotoMode ? catCurrent : current) + 1);
+        if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo((catPhotoMode ? catCurrent : current) - 1);
+      });
+    })();
   </script>
 </body>
 </html>

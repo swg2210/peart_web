@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — jinho.kim</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0e0e0e;
+      --surface: #181818;
+      --surface2: #222222;
+      --border: #2e2e2e;
+      --text: #e8e8e8;
+      --text-dim: #888;
+      --accent: #e8e8e8;
+      --danger: #e05555;
+      --success: #4caf7d;
+      --radius: 8px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      font-size: 14px;
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 48px 40px;
+      width: 340px;
+      text-align: center;
+    }
+
+    .login-box h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .login-box p {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+    }
+
+    .login-box input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 12px;
+      text-align: center;
+      letter-spacing: 0.2em;
+    }
+
+    .login-box input:focus { border-color: #555; }
+
+    .login-error {
+      font-size: 0.75rem;
+      color: var(--danger);
+      margin-bottom: 12px;
+      min-height: 18px;
+    }
+
+    /* ── BUTTONS ── */
+    btn, .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.78rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      text-decoration: none;
+    }
+
+    .btn:hover { background: #2a2a2a; border-color: #444; }
+
+    .btn-primary {
+      background: var(--text);
+      color: #111;
+      border-color: var(--text);
+      font-weight: 500;
+    }
+
+    .btn-primary:hover { background: #ccc; border-color: #ccc; }
+
+    .btn-danger { color: var(--danger); border-color: #3a2222; }
+    .btn-danger:hover { background: #2a1a1a; border-color: var(--danger); }
+
+    .btn-sm { padding: 5px 10px; font-size: 0.72rem; }
+
+    .btn-icon {
+      padding: 5px 8px;
+      font-size: 0.8rem;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .btn-icon:hover { background: var(--surface2); color: var(--text); }
+
+    /* ── LAYOUT ── */
+    #app { display: none; flex-direction: column; min-height: 100vh; }
+    #app.visible { display: flex; }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 50;
+    }
+
+    #topbar h1 {
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    #topbar .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #save-status {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    #save-status.success { color: var(--success); }
+    #save-status.error   { color: var(--danger); }
+
+    /* ── MAIN CONTENT ── */
+    #main {
+      display: flex;
+      flex: 1;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: 240px;
+      min-width: 240px;
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      padding: 0 20px 8px;
+      text-transform: uppercase;
+    }
+
+    .cat-group { margin-bottom: 8px; }
+
+    .cat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 20px;
+      cursor: pointer;
+      border-radius: 0;
+      transition: background 0.1s;
+    }
+
+    .cat-header:hover { background: var(--surface); }
+    .cat-header.active { background: var(--surface2); }
+
+    .cat-name {
+      font-size: 0.8rem;
+      font-weight: 400;
+    }
+
+    .cat-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.1s; }
+    .cat-header:hover .cat-actions { opacity: 1; }
+
+    .sub-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 20px 5px 32px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .sub-item:hover { background: var(--surface); }
+    .sub-item.active { background: var(--surface2); }
+
+    .sub-item .sub-name {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .sub-item.active .sub-name { color: var(--text); }
+
+    .sub-actions { display: flex; gap: 2px; opacity: 0; }
+    .sub-item:hover .sub-actions { opacity: 1; }
+
+    #sidebar-footer {
+      padding: 16px 20px 0;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    /* ── CONTENT PANEL ── */
+    #content {
+      flex: 1;
+      padding: 28px 32px;
+      overflow-y: auto;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+      gap: 12px;
+      color: var(--text-dim);
+    }
+
+    .empty-state .icon { font-size: 2rem; }
+    .empty-state p { font-size: 0.8rem; }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-header h2 {
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+
+    .section-header .breadcrumb {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ── FORM ── */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      max-width: 480px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus { border-color: #555; }
+
+    .form-group textarea { resize: vertical; min-height: 72px; }
+
+    .form-hint {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    /* ── PHOTOS SECTION ── */
+    .photos-section { margin-top: 32px; }
+
+    .photos-section h3 {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .photo-card {
+      position: relative;
+      aspect-ratio: 3/2;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: grab;
+    }
+
+    .photo-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-card .photo-remove {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0,0,0,0.7);
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+
+    .photo-card:hover .photo-remove { opacity: 1; }
+
+    .photo-card.dragging { opacity: 0.4; border: 2px dashed #555; }
+    .photo-card.drag-over { border: 2px dashed var(--accent); }
+
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      margin-bottom: 16px;
+    }
+
+    .upload-area:hover,
+    .upload-area.drag-over { border-color: #555; background: var(--surface); }
+
+    .upload-area .upload-icon { font-size: 1.8rem; margin-bottom: 8px; }
+
+    .upload-area p {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+
+    .upload-area input[type="file"] { display: none; }
+
+    .upload-progress {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 8px;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 380px;
+      max-width: 90vw;
+    }
+
+    .modal h3 { font-size: 0.95rem; font-weight: 500; margin-bottom: 20px; }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    /* ── CATEGORY EDIT MODE ── */
+    .cat-edit-panel { max-width: 480px; }
+
+    .sub-list-manage {
+      margin-top: 24px;
+    }
+
+    .sub-list-manage h3 {
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .sub-row span { font-size: 0.82rem; }
+
+    /* ── TAG ── */
+    .tag {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 28px 0;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>jinho.kim Admin</h1>
+    <p>관리자 비밀번호를 입력하세요</p>
+    <input type="password" id="pw-input" placeholder="••••••••" autocomplete="current-password">
+    <div class="login-error" id="login-error"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">로그인</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <!-- 상단바 -->
+  <div id="topbar">
+    <h1>jinho.kim — Admin</h1>
+    <div class="topbar-right">
+      <span id="save-status"></span>
+      <a href="/" target="_blank" class="btn btn-sm">사이트 보기 ↗</a>
+      <button class="btn btn-sm btn-primary" onclick="saveAll()">저장하기</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <!-- 사이드바 -->
+    <div id="sidebar">
+      <div class="sidebar-label">카테고리</div>
+      <div id="cat-list"></div>
+      <div id="sidebar-footer">
+        <button class="btn btn-sm" style="width:100%;justify-content:center" onclick="openAddCatModal()">+ 카테고리 추가</button>
+      </div>
+    </div>
+
+    <!-- 콘텐츠 -->
+    <div id="content">
+      <div class="empty-state" id="empty-state">
+        <div class="icon">←</div>
+        <p>왼쪽에서 항목을 선택하세요</p>
+      </div>
+      <div id="sub-editor" style="display:none"></div>
+      <div id="cat-editor" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카테고리 추가 모달 ── -->
+<div class="modal-overlay" id="modal-add-cat">
+  <div class="modal">
+    <h3>카테고리 추가</h3>
+    <div class="form-group">
+      <label>카테고리 이름</label>
+      <input type="text" id="new-cat-name" placeholder="예: Personal" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" onclick="closeModal('modal-add-cat')">취소</button>
+      <button class="btn btn-sm btn-primary" onclick="addCategory()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 하위 카테고리 추가 모달 ── -->
+<div class="modal-overlay" id="modal-add-sub">
+  <div class="modal">
+    <h3>하위 카테고리 추가</h3>
+    <div class="form-group">
+      <label>이름 (Nav에 표시)</label>
+      <input type="text" id="new-sub-name" placeholder="예: April in Seoul" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-sm" onclick="closeModal('modal-add-sub')">취소</button>
+      <button class="btn btn-sm btn-primary" onclick="addSubcategory()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 삭제 확인 모달 ── -->
+<div class="modal-overlay" id="modal-confirm-delete">
+  <div class="modal">
+    <h3 id="delete-confirm-title">정말 삭제하시겠어요?</h3>
+    <p style="font-size:0.8rem;color:var(--text-dim);margin-bottom:4px" id="delete-confirm-msg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-sm" onclick="closeModal('modal-confirm-delete')">취소</button>
+      <button class="btn btn-sm btn-danger" id="delete-confirm-btn">삭제</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ────────────────────────────────────────────
+// STATE
+// ────────────────────────────────────────────
+let adminPassword = '';
+let siteData = null;
+let cloudConfig = { cloudinaryCloud: '', cloudinaryPreset: '' };
+let selectedCatId  = null;
+let selectedSubId  = null;
+let pendingDeleteFn = null;
+let addSubTargetCatId = null;
+
+// ────────────────────────────────────────────
+// LOGIN
+// ────────────────────────────────────────────
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+async function doLogin() {
+  const pw = document.getElementById('pw-input').value.trim();
+  if (!pw) return;
+
+  // 비밀번호 검증 (save-data API로 빈 payload 전송해서 인증 확인)
+  const res = await fetch('/api/save-data', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw, data: null, checkOnly: true })
+  });
+
+  if (res.status === 401) {
+    document.getElementById('login-error').textContent = '비밀번호가 틀렸습니다.';
+    return;
+  }
+
+  adminPassword = pw;
+  document.getElementById('login-error').textContent = '';
+  await initApp();
+}
+
+// ────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────
+async function initApp() {
+  // data.json 로드
+  try {
+    const res = await fetch('./data.json?t=' + Date.now());
+    siteData = await res.json();
+  } catch (e) {
+    alert('data.json 로드 실패: ' + e.message);
+    return;
+  }
+
+  // Cloudinary 설정 로드
+  try {
+    const res = await fetch('/api/config');
+    cloudConfig = await res.json();
+  } catch (e) {}
+
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  renderSidebar();
+}
+
+// ────────────────────────────────────────────
+// SIDEBAR
+// ────────────────────────────────────────────
+function renderSidebar() {
+  const container = document.getElementById('cat-list');
+  container.innerHTML = '';
+
+  siteData.categories.forEach(cat => {
+    const group = document.createElement('div');
+    group.className = 'cat-group';
+    group.innerHTML = `
+      <div class="cat-header ${selectedCatId === cat.id && !selectedSubId ? 'active' : ''}"
+           onclick="selectCat('${cat.id}')">
+        <span class="cat-name">${cat.label}</span>
+        <div class="cat-actions">
+          <button class="btn-icon" title="카테고리 삭제" onclick="event.stopPropagation();confirmDelete('cat','${cat.id}')">✕</button>
+        </div>
+      </div>
+      ${cat.subcategories.map(sub => `
+        <div class="sub-item ${selectedSubId === sub.id ? 'active' : ''}"
+             onclick="selectSub('${cat.id}','${sub.id}')">
+          <span class="sub-name">${sub.name}</span>
+          <div class="sub-actions">
+            <button class="btn-icon" title="하위 카테고리 삭제" onclick="event.stopPropagation();confirmDelete('sub','${sub.id}','${cat.id}')">✕</button>
+          </div>
+        </div>`).join('')}
+      <div style="padding:4px 20px 4px 32px">
+        <button class="btn btn-sm" style="font-size:0.68rem;padding:3px 8px"
+          onclick="openAddSubModal('${cat.id}')">+ 하위 추가</button>
+      </div>`;
+    container.appendChild(group);
+  });
+}
+
+// ────────────────────────────────────────────
+// SELECT
+// ────────────────────────────────────────────
+function selectCat(catId) {
+  selectedCatId = catId;
+  selectedSubId = null;
+  renderSidebar();
+  renderCatEditor(catId);
+}
+
+function selectSub(catId, subId) {
+  selectedCatId = catId;
+  selectedSubId = subId;
+  renderSidebar();
+  renderSubEditor(catId, subId);
+}
+
+// ────────────────────────────────────────────
+// CAT EDITOR
+// ────────────────────────────────────────────
+function renderCatEditor(catId) {
+  const cat = siteData.categories.find(c => c.id === catId);
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('sub-editor').style.display  = 'none';
+  const el = document.getElementById('cat-editor');
+  el.style.display = 'block';
+
+  el.innerHTML = `
+    <div class="section-header">
+      <div>
+        <h2>${cat.label}</h2>
+        <div class="breadcrumb">상위 카테고리</div>
+      </div>
+    </div>
+    <div class="cat-edit-panel">
+      <div class="form-group">
+        <label>카테고리 이름</label>
+        <input type="text" id="edit-cat-label" value="${cat.label}" autocomplete="off"
+          oninput="cat_updateLabel('${cat.id}', this.value)">
+      </div>
+
+      <div class="sub-list-manage">
+        <h3>하위 카테고리 (${cat.subcategories.length}개)</h3>
+        ${cat.subcategories.map(sub => `
+          <div class="sub-row">
+            <span>${sub.name}</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span class="tag">${sub.photos.length}장</span>
+              <button class="btn btn-sm" onclick="selectSub('${cat.id}','${sub.id}')">편집</button>
+            </div>
+          </div>`).join('')}
+        ${cat.subcategories.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">하위 카테고리가 없습니다.</p>` : ''}
+      </div>
+    </div>`;
+}
+
+function cat_updateLabel(catId, value) {
+  const cat = siteData.categories.find(c => c.id === catId);
+  if (cat) cat.label = value;
+}
+
+// ────────────────────────────────────────────
+// SUB EDITOR
+// ────────────────────────────────────────────
+function renderSubEditor(catId, subId) {
+  const cat = siteData.categories.find(c => c.id === catId);
+  const sub = cat?.subcategories.find(s => s.id === subId);
+  if (!cat || !sub) return;
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('cat-editor').style.display  = 'none';
+  const el = document.getElementById('sub-editor');
+  el.style.display = 'block';
+
+  el.innerHTML = `
+    <div class="section-header">
+      <div>
+        <h2>${sub.name}</h2>
+        <div class="breadcrumb">${cat.label} → 하위 카테고리</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Nav 이름 <span style="color:var(--text-dim);font-size:0.65rem">(상단 메뉴에 표시)</span></label>
+      <input type="text" id="edit-sub-name" value="${sub.name}" autocomplete="off"
+        oninput="sub_update('${catId}','${subId}','name',this.value)">
+    </div>
+
+    <div class="form-group">
+      <label>로딩 타이틀 <span style="color:var(--text-dim);font-size:0.65rem">(클릭 시 큰 글씨)</span></label>
+      <input type="text" id="edit-sub-title" value="${sub.title}" autocomplete="off"
+        oninput="sub_update('${catId}','${subId}','title',this.value)">
+      <div class="form-hint">기본값은 Nav 이름과 동일</div>
+    </div>
+
+    <div class="form-group">
+      <label>로딩 서브타이틀 <span style="color:var(--text-dim);font-size:0.65rem">(타이틀 아래 작은 글씨)</span></label>
+      <input type="text" id="edit-sub-subtitle" value="${sub.subtitle || ''}" autocomplete="off"
+        placeholder="선택사항"
+        oninput="sub_update('${catId}','${subId}','subtitle',this.value)">
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="photos-section">
+      <h3>사진 (${sub.photos.length}장)</h3>
+
+      <div class="upload-area" id="upload-area-${subId}"
+           onclick="document.getElementById('file-input-${subId}').click()"
+           ondragover="onDragOverUpload(event)"
+           ondragleave="onDragLeaveUpload(event,'upload-area-${subId}')"
+           ondrop="onDropUpload(event,'${catId}','${subId}')">
+        <div class="upload-icon">+</div>
+        <p>클릭하거나 드래그해서 사진 업로드</p>
+        <p style="font-size:0.68rem;margin-top:4px">JPG, PNG, WEBP 지원</p>
+        <input type="file" id="file-input-${subId}" multiple accept="image/*"
+          onchange="onFileSelect(event,'${catId}','${subId}')">
+      </div>
+
+      <div id="upload-progress-${subId}" class="upload-progress" style="display:none"></div>
+
+      <div class="photos-grid" id="photos-grid-${catId}-${subId}">
+        ${sub.photos.map((src, i) => photoCardHTML(src, i, catId, subId)).join('')}
+      </div>
+
+      ${sub.photos.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">아직 사진이 없습니다.</p>` : ''}
+    </div>`;
+}
+
+function photoCardHTML(src, index, catId, subId) {
+  const display = src.startsWith('http') ? src : src;
+  return `<div class="photo-card" draggable="true"
+    ondragstart="onPhotoCardDragStart(event,${index},'${catId}','${subId}')"
+    ondragover="onPhotoCardDragOver(event,this)"
+    ondragleave="onPhotoCardDragLeave(this)"
+    ondrop="onPhotoCardDrop(event,${index},'${catId}','${subId}')">
+    <img src="${display}" loading="lazy" onerror="this.style.opacity=0.3">
+    <button class="photo-remove" onclick="removePhoto('${catId}','${subId}',${index})">✕</button>
+  </div>`;
+}
+
+function sub_update(catId, subId, field, value) {
+  const cat = siteData.categories.find(c => c.id === catId);
+  const sub = cat?.subcategories.find(s => s.id === subId);
+  if (sub) sub[field] = value;
+}
+
+function removePhoto(catId, subId, index) {
+  const cat = siteData.categories.find(c => c.id === catId);
+  const sub = cat?.subcategories.find(s => s.id === subId);
+  if (!sub) return;
+  sub.photos.splice(index, 1);
+  // allPhotos에서도 제거 (선택적 — 완전히 삭제하려면 주석 해제)
+  // const removed = sub.photos[index]; siteData.allPhotos = siteData.allPhotos.filter(p => p !== removed);
+  renderSubEditor(catId, subId);
+  renderSidebar();
+}
+
+// ── 드래그 앤 드롭 (사진 순서 변경) ──
+let dragSrcIndex = null;
+
+function onPhotoCardDragStart(e, index, catId, subId) {
+  dragSrcIndex = index;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onPhotoCardDragOver(e, el) {
+  e.preventDefault();
+  document.querySelectorAll('.photo-card').forEach(c => c.classList.remove('drag-over'));
+  el.classList.add('drag-over');
+}
+
+function onPhotoCardDragLeave(el) { el.classList.remove('drag-over'); }
+
+function onPhotoCardDrop(e, targetIndex, catId, subId) {
+  e.preventDefault();
+  document.querySelectorAll('.photo-card').forEach(c => { c.classList.remove('drag-over'); c.classList.remove('dragging'); });
+  if (dragSrcIndex === null || dragSrcIndex === targetIndex) return;
+  const cat = siteData.categories.find(c => c.id === catId);
+  const sub = cat?.subcategories.find(s => s.id === subId);
+  if (!sub) return;
+  const [moved] = sub.photos.splice(dragSrcIndex, 1);
+  sub.photos.splice(targetIndex, 0, moved);
+  dragSrcIndex = null;
+  renderSubEditor(catId, subId);
+}
+
+// ── 업로드 영역 드래그 ──
+function onDragOverUpload(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onDragLeaveUpload(e, id) {
+  document.getElementById(id)?.classList.remove('drag-over');
+}
+
+function onDropUpload(e, catId, subId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (files.length) uploadFiles(files, catId, subId);
+}
+
+function onFileSelect(e, catId, subId) {
+  const files = Array.from(e.target.files);
+  if (files.length) uploadFiles(files, catId, subId);
+}
+
+// ────────────────────────────────────────────
+// CLOUDINARY UPLOAD
+// ────────────────────────────────────────────
+async function uploadFiles(files, catId, subId) {
+  const progress = document.getElementById(`upload-progress-${subId}`);
+  if (!cloudConfig.cloudinaryCloud || !cloudConfig.cloudinaryPreset) {
+    alert('Cloudinary 환경변수가 설정되지 않았습니다.\nVercel에서 CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET을 설정하세요.');
+    return;
+  }
+
+  progress.style.display = 'block';
+  const cat = siteData.categories.find(c => c.id === catId);
+  const sub = cat?.subcategories.find(s => s.id === subId);
+  if (!sub) return;
+
+  for (let i = 0; i < files.length; i++) {
+    progress.textContent = `업로드 중... ${i + 1} / ${files.length}`;
+    try {
+      const url = await uploadToCloudinary(files[i]);
+      sub.photos.push(url);
+      if (!siteData.allPhotos.includes(url)) siteData.allPhotos.push(url);
+    } catch (e) {
+      alert(`업로드 실패: ${files[i].name}\n${e.message}`);
+    }
+  }
+
+  progress.style.display = 'none';
+  renderSubEditor(catId, subId);
+  renderSidebar();
+}
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', cloudConfig.cloudinaryPreset);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudConfig.cloudinaryCloud}/image/upload`, {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || 'Cloudinary 오류');
+  }
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
+// ────────────────────────────────────────────
+// ADD / DELETE
+// ────────────────────────────────────────────
+function openAddCatModal() {
+  document.getElementById('new-cat-name').value = '';
+  openModal('modal-add-cat');
+  setTimeout(() => document.getElementById('new-cat-name').focus(), 50);
+}
+
+function addCategory() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  if (!name) return;
+  const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  siteData.categories.push({ id, label: name, subcategories: [] });
+  closeModal('modal-add-cat');
+  renderSidebar();
+  selectCat(id);
+}
+
+function openAddSubModal(catId) {
+  addSubTargetCatId = catId;
+  document.getElementById('new-sub-name').value = '';
+  openModal('modal-add-sub');
+  setTimeout(() => document.getElementById('new-sub-name').focus(), 50);
+}
+
+function addSubcategory() {
+  const name = document.getElementById('new-sub-name').value.trim();
+  if (!name || !addSubTargetCatId) return;
+  const cat = siteData.categories.find(c => c.id === addSubTargetCatId);
+  if (!cat) return;
+  const id = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
+  cat.subcategories.push({ id, name, title: name, subtitle: '', photos: [] });
+  closeModal('modal-add-sub');
+  renderSidebar();
+  selectSub(addSubTargetCatId, id);
+}
+
+function confirmDelete(type, id, catId) {
+  if (type === 'cat') {
+    const cat = siteData.categories.find(c => c.id === id);
+    document.getElementById('delete-confirm-title').textContent = `"${cat?.label}" 카테고리를 삭제할까요?`;
+    document.getElementById('delete-confirm-msg').textContent = '하위 카테고리와 사진 연결이 모두 삭제됩니다.';
+    pendingDeleteFn = () => {
+      siteData.categories = siteData.categories.filter(c => c.id !== id);
+      if (selectedCatId === id) { selectedCatId = null; selectedSubId = null; }
+      closeModal('modal-confirm-delete');
+      renderSidebar();
+      document.getElementById('empty-state').style.display = 'flex';
+      document.getElementById('cat-editor').style.display  = 'none';
+      document.getElementById('sub-editor').style.display  = 'none';
+    };
+  } else {
+    const cat = siteData.categories.find(c => c.id === catId);
+    const sub = cat?.subcategories.find(s => s.id === id);
+    document.getElementById('delete-confirm-title').textContent = `"${sub?.name}"을 삭제할까요?`;
+    document.getElementById('delete-confirm-msg').textContent = '사진 연결이 해제됩니다. (실제 파일은 유지)';
+    pendingDeleteFn = () => {
+      if (cat) cat.subcategories = cat.subcategories.filter(s => s.id !== id);
+      if (selectedSubId === id) { selectedSubId = null; }
+      closeModal('modal-confirm-delete');
+      renderSidebar();
+      if (selectedCatId) renderCatEditor(selectedCatId);
+    };
+  }
+  document.getElementById('delete-confirm-btn').onclick = pendingDeleteFn;
+  openModal('modal-confirm-delete');
+}
+
+// ────────────────────────────────────────────
+// SAVE
+// ────────────────────────────────────────────
+async function saveAll() {
+  const btn = document.querySelector('#topbar .btn-primary');
+  const statusEl = document.getElementById('save-status');
+
+  btn.disabled = true;
+  btn.textContent = '저장 중...';
+  statusEl.textContent = '';
+  statusEl.className = '';
+
+  try {
+    const res = await fetch('/api/save-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPassword, data: siteData })
+    });
+
+    const result = await res.json();
+
+    if (res.ok && result.success) {
+      statusEl.textContent = '✓ ' + result.message;
+      statusEl.className = 'success';
+    } else {
+      statusEl.textContent = '✗ ' + (result.error || '저장 실패');
+      statusEl.className = 'error';
+    }
+  } catch (e) {
+    statusEl.textContent = '✗ 네트워크 오류';
+    statusEl.className = 'error';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '저장하기';
+}
+
+// ────────────────────────────────────────────
+// MODAL HELPERS
+// ────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// 모달 오버레이 클릭 닫기
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// Enter 키 모달 제출
+document.getElementById('new-cat-name').addEventListener('keydown', e => { if (e.key === 'Enter') addCategory(); });
+document.getElementById('new-sub-name').addEventListener('keydown', e => { if (e.key === 'Enter') addSubcategory(); });
+</script>
+</body>
+</html>
