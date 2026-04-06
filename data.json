@@ -35,9 +35,9 @@
       "subcategories": [
         {
           "id": "april-in-seoul",
-          "name": "April in Seoul",
-          "title": "April in Seoul",
-          "subtitle": "street photo.",
+          "name": "Seoul, KR",
+          "title": "Seoul, KR",
+          "subtitle": "",
           "photos": [
             "./images/DSC01006.JPG",
             "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775378221/lsd4wdkt7loxevkwm2jc.jpg"
@@ -60,6 +60,27 @@
             "./images/IMG_9481.JPG",
             "./images/098DE0F3-54EF-4637-AE30-C47B0A97048F.JPG"
           ]
+        },
+        {
+          "id": "copenhagen-dk-1775486042297",
+          "name": "Copenhagen, DK",
+          "title": "Copenhagen, DK",
+          "subtitle": "",
+          "photos": []
+        },
+        {
+          "id": "malm-se-1775486055251",
+          "name": "Malmö, SE",
+          "title": "Malmö, SE",
+          "subtitle": "",
+          "photos": []
+        },
+        {
+          "id": "berlin-de-1775486063651",
+          "name": "Berlin, DE",
+          "title": "Berlin, DE",
+          "subtitle": "",
+          "photos": []
         }
       ]
     },
@@ -69,15 +90,15 @@
       "subcategories": [
         {
           "id": "wedding",
-          "name": "Wedding",
-          "title": "Wedding",
+          "name": "WEDDING",
+          "title": "",
           "subtitle": "",
           "photos": []
         },
         {
           "id": "space",
-          "name": "Space",
-          "title": "Space",
+          "name": "INTERIOR",
+          "title": "",
           "subtitle": "",
           "photos": []
         }
