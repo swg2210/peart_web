@@ -37,7 +37,7 @@
           "id": "april-in-seoul",
           "name": "Seoul, KR",
           "title": "Seoul, KR",
-          "subtitle": "",
+          "subtitle": "2026 South Korea street photography.",
           "photos": [
             "./images/DSC01006.JPG",
             "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775378221/lsd4wdkt7loxevkwm2jc.jpg"
@@ -47,7 +47,7 @@
           "id": "december-in-island",
           "name": "ISLAND",
           "title": "ISLAND",
-          "subtitle": "2025 ISLAND.",
+          "subtitle": "2025 Island street photography.",
           "photos": [
             "./images/DSC00767.JPG",
             "./images/DSC01018.JPG",
@@ -65,21 +65,21 @@
           "id": "copenhagen-dk-1775486042297",
           "name": "Copenhagen, DK",
           "title": "Copenhagen, DK",
-          "subtitle": "",
+          "subtitle": "2025 Copenhagen street photography.",
           "photos": []
         },
         {
           "id": "malm-se-1775486055251",
           "name": "Malmö, SE",
           "title": "Malmö, SE",
-          "subtitle": "",
+          "subtitle": "2025 Sweden street photography.",
           "photos": []
         },
         {
           "id": "berlin-de-1775486063651",
           "name": "Berlin, DE",
           "title": "Berlin, DE",
-          "subtitle": "",
+          "subtitle": "2025 Germany street photography.",
           "photos": []
         }
       ]
