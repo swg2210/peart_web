@@ -58,11 +58,8 @@
     }
 
     .nav-label::after {
-      content: ',\00a0';
-      opacity: 0.4;
+      content: '\00a0\00a0';
     }
-
-    .nav-item:last-child .nav-label::after { content: ''; }
 
     .nav-label {
       font-size: 0.72rem;
@@ -174,11 +171,12 @@
     #gallery-title {
       display: none;
       position: fixed;
-      right: 0;
+      left: 50%;
       top: 50%;
-      transform: translateY(-50%);
-      width: 52vw;
-      padding: 0 80px 0 48px;
+      transform: translateX(-50%) translateY(-50%);
+      width: auto;
+      padding: 0;
+      text-align: center;
       pointer-events: none;
       z-index: 50;
     }
@@ -240,6 +238,145 @@
       #gallery-title .g-main { font-size: 2.4rem; white-space: nowrap; }
       #gallery-title .g-sub  { white-space: nowrap; }
     }
+
+    /* ── GRID VIEW (Interior) ── */
+    #grid-view {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 80;
+      overflow-y: auto;
+      padding: 100px 36px 60px;
+    }
+
+    #grid-view.open { display: block; }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px 24px;
+    }
+
+    .grid-item {
+      cursor: pointer;
+    }
+
+    .grid-item-thumb {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      overflow: hidden;
+      background: #f0f0f0;
+      margin-bottom: 10px;
+    }
+
+    .grid-item-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0.2s;
+    }
+
+    .grid-item:hover .grid-item-thumb img { opacity: 0.85; }
+
+    .grid-item-name {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: #111;
+      letter-spacing: 0.01em;
+    }
+
+    .grid-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 0;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    @media (max-width: 768px) {
+      #grid-view { padding: 80px 20px 40px; }
+      .grid-container { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
+    }
+
+    /* ── SPLIT VIEW (Wedding) ── */
+    #split-view {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 80;
+    }
+
+    #split-view.open { display: flex; }
+
+    /* 왼쪽: 대표 사진 고정 */
+    #split-main {
+      flex: 0 0 55%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      background: #fff;
+      padding: 80px 12px 20px 36px;
+    }
+
+    #split-main-img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      transition: opacity 0.2s ease;
+    }
+
+    /* 오른쪽: 불규칙 그리드, 스크롤 가능, 스크롤바 숨김 */
+    #split-thumbs {
+      flex: 1;
+      overflow-y: scroll;
+      padding: 80px 28px 20px 4px;
+      scrollbar-width: none; /* Firefox */
+    }
+
+    #split-thumbs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+    .split-masonry {
+      columns: 2;
+      column-gap: 6px;
+    }
+
+    .split-thumb {
+      cursor: pointer;
+      overflow: hidden;
+      background: #f0f0f0;
+      break-inside: avoid;
+      margin-bottom: 6px;
+    }
+
+    /* 불규칙 사이즈 */
+    .split-thumb:nth-child(4n+1) { aspect-ratio: 3/4; }
+    .split-thumb:nth-child(4n+2) { aspect-ratio: 4/3; }
+    .split-thumb:nth-child(4n+3) { aspect-ratio: 1/1; }
+    .split-thumb:nth-child(4n+4) { aspect-ratio: 3/4; }
+
+    .split-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0.15s;
+      display: block;
+    }
+
+    .split-thumb:hover img { opacity: 0.75; }
+    .split-thumb.active img { opacity: 0.4; }
+
+    @media (max-width: 768px) {
+      #split-view { flex-direction: column; }
+      #split-main  { flex: 0 0 50vh; padding: 70px 20px 16px; }
+      #split-thumbs { padding: 16px 20px 40px; }
+      .split-masonry { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+      .split-thumb:nth-child(n) { aspect-ratio: 1/1; }
+    }
   </style>
 </head>
 <body>
@@ -262,6 +399,18 @@
   <div id="gallery-overlay"></div>
   <div id="gallery-title"></div>
   <div id="counter"></div>
+  <div id="grid-view">
+    <div class="grid-container" id="grid-container"></div>
+  </div>
+
+  <div id="split-view">
+    <div id="split-main">
+      <img id="split-main-img" src="" alt="">
+    </div>
+    <div id="split-thumbs">
+      <div class="split-masonry" id="split-masonry"></div>
+    </div>
+  </div>
 
   <script>
     (async () => {
@@ -309,14 +458,18 @@
 
       // ── 카테고리 데이터 맵 ──
       const subDataMap   = {};  // catId -> [subName, ...]
-      const subInfoMap   = {};  // subName -> { title, subtitle }
+      const subInfoMap   = {};  // subName -> { title, subtitle, type }
       const catPhotosMap = {};  // subName -> [photoSrc, ...]
+      const gridDataMap  = {};  // catId -> sub  (type=grid)
+      const splitDataMap = {};  // subName -> [photoSrc, ...]  (type=split)
 
       categories.forEach(cat => {
         subDataMap[cat.id] = cat.subcategories.map(s => s.name);
         cat.subcategories.forEach(sub => {
-          subInfoMap[sub.name]   = { title: sub.title, subtitle: sub.subtitle };
-          catPhotosMap[sub.name] = sub.photos;
+          subInfoMap[sub.name]   = { title: sub.title, subtitle: sub.subtitle, type: sub.type };
+          catPhotosMap[sub.name] = sub.photos || [];
+          if (sub.type === 'grid')  gridDataMap[cat.id]    = sub;
+          if (sub.type === 'split') splitDataMap[sub.name] = sub.photos || [];
         });
       });
 
@@ -386,13 +539,7 @@
         counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
       }
 
-      // ── 스크롤 / 스와이프 ──
-      window.addEventListener('wheel', e => {
-        e.preventDefault();
-        if (galleryMode) return;
-        const idx = catPhotoMode ? catCurrent : current;
-        (e.deltaY > 0 || e.deltaX > 0) ? goTo(idx + 1) : goTo(idx - 1);
-      }, { passive: false });
+      // ── 스크롤 / 스와이프 ── (wheel은 아래 통합 처리)
 
       const SWIPE_THRESHOLD = 55;
       let touchX = null, touchAccum = 0;
@@ -412,11 +559,81 @@
       const mobileSubBar  = document.getElementById('mobile-sub-bar');
       const mobileSubList = document.getElementById('mobile-sub-list');
       const galleryTitle  = document.getElementById('gallery-title');
+      const gridView      = document.getElementById('grid-view');
+      const gridContainer = document.getElementById('grid-container');
+      const splitView     = document.getElementById('split-view');
+      const splitMainImg  = document.getElementById('split-main-img');
+      const splitMasonry  = document.getElementById('split-masonry');
       const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
       let galleryMode = false;
+      let gridViewMode = false;
+      let splitViewMode = false;
       let currentActiveLink = null;
       let galleryTimer = null;
+
+      // ── 스플릿 뷰 (Wedding) ──
+      function openSplitView(subName) {
+        const photoSet = splitDataMap[subName] || [];
+        if (!photoSet.length) return;
+        splitViewMode = true;
+
+        // 썸네일 렌더
+        splitMasonry.innerHTML = photoSet.map((src, i) => `
+          <div class="split-thumb${i === 0 ? ' active' : ''}" data-src="${src}">
+            <img src="${src}" loading="lazy" alt="">
+          </div>`).join('');
+
+        // 대표 사진 초기값
+        splitMainImg.src = photoSet[0];
+
+        // 썸네일 클릭 이벤트
+        splitMasonry.querySelectorAll('.split-thumb').forEach(thumb => {
+          thumb.addEventListener('click', () => {
+            splitMasonry.querySelectorAll('.split-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+            splitMainImg.style.opacity = '0';
+            setTimeout(() => {
+              splitMainImg.src = thumb.dataset.src;
+              splitMainImg.style.opacity = '1';
+            }, 150);
+          });
+        });
+
+        splitView.classList.add('open');
+        counter.style.display = 'none';
+      }
+
+      function closeSplitView() {
+        splitViewMode = false;
+        splitView.classList.remove('open');
+        counter.style.display = '';
+      }
+
+      // ── 그리드 뷰 ──
+      function openGridView(catId) {
+        const sub = gridDataMap[catId];
+        if (!sub) return;
+        gridViewMode = true;
+        const projects = sub.projects || [];
+        gridContainer.innerHTML = projects.length === 0
+          ? `<div class="grid-empty">아직 등록된 프로젝트가 없습니다.</div>`
+          : projects.map(p => `
+              <div class="grid-item">
+                <div class="grid-item-thumb">
+                  ${p.coverPhoto ? `<img src="${p.coverPhoto}" alt="${p.name}" loading="lazy">` : ''}
+                </div>
+                <div class="grid-item-name">${p.name}</div>
+              </div>`).join('');
+        gridView.classList.add('open');
+        counter.style.display = 'none';
+      }
+
+      function closeGridView() {
+        gridViewMode = false;
+        gridView.classList.remove('open');
+        counter.style.display = '';
+      }
 
       function enterGallery(title, activeLink) {
         currentActiveLink = activeLink;
@@ -454,7 +671,25 @@
         container.querySelectorAll('a').forEach(a => {
           a.addEventListener('click', e => {
             e.preventDefault();
-            enterGallery(a.textContent.trim(), a);
+            const name = a.textContent.trim();
+            const info = subInfoMap[name] || {};
+            if (info.type === 'grid') {
+              let targetCatId = null;
+              categories.forEach(cat => {
+                cat.subcategories.forEach(sub => { if (sub.name === name) targetCatId = cat.id; });
+              });
+              exitGallery();
+              closeSplitView();
+              if (targetCatId) openGridView(targetCatId);
+            } else if (info.type === 'split') {
+              exitGallery();
+              closeGridView();
+              openSplitView(name);
+            } else {
+              closeGridView();
+              closeSplitView();
+              enterGallery(name, a);
+            }
           });
         });
       }
@@ -465,12 +700,14 @@
           const cat    = item.dataset.cat;
           const isOpen = item.classList.contains('open');
           const navListEl = document.querySelector('.nav-list');
+          const isGridCat = !!gridDataMap[cat];
 
           if (isMobile()) {
             const sameOpen = mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
             navItems.forEach(i => i.classList.remove('open'));
             if (sameOpen) {
               mobileSubBar.classList.remove('open');
+              closeGridView();
             } else {
               mobileSubBar.dataset.cat = cat;
               mobileSubBar.classList.add('open');
@@ -480,8 +717,33 @@
               const navRect = document.getElementById('main-nav').getBoundingClientRect();
               mobileSubBar.style.top  = navRect.bottom + 1 + 'px';
               mobileSubBar.style.left = navRect.left + 'px';
-              const firstLink = mobileSubList.querySelector('a');
-              if (subDataMap[cat] && subDataMap[cat].length) enterGallery(subDataMap[cat][0], firstLink);
+              // 첫 번째 서브카테고리 type에 따라 자동 오픈
+              if (subDataMap[cat] && subDataMap[cat].length) {
+                const firstName = subDataMap[cat][0];
+                const firstInfo = subInfoMap[firstName] || {};
+                const firstLink = mobileSubList.querySelector('a');
+                if (firstInfo.type === 'grid') {
+                  exitGallery();
+                  closeSplitView();
+                  document.querySelectorAll('#mobile-sub-list a').forEach(a => a.classList.remove('active'));
+                  if (firstLink) firstLink.classList.add('active');
+                  let targetCatId = null;
+                  categories.forEach(c => {
+                    c.subcategories.forEach(s => { if (s.name === firstName) targetCatId = c.id; });
+                  });
+                  if (targetCatId) openGridView(targetCatId);
+                } else if (firstInfo.type === 'split') {
+                  exitGallery();
+                  closeGridView();
+                  document.querySelectorAll('#mobile-sub-list a').forEach(a => a.classList.remove('active'));
+                  if (firstLink) firstLink.classList.add('active');
+                  openSplitView(firstName);
+                } else {
+                  closeGridView();
+                  closeSplitView();
+                  enterGallery(firstName, firstLink);
+                }
+              }
             }
           } else {
             navItems.forEach(i => i.classList.remove('open'));
@@ -489,17 +751,45 @@
               item.classList.add('open');
               navListEl.prepend(item);
               bindSubLinks(item.querySelector('.sub-list'));
-              const firstLink = item.querySelector('.sub-list a');
-              if (subDataMap[cat] && subDataMap[cat].length) enterGallery(subDataMap[cat][0], firstLink);
+              // 첫 번째 서브카테고리의 type에 따라 적절한 뷰 자동 오픈
+              if (subDataMap[cat] && subDataMap[cat].length) {
+                const firstName = subDataMap[cat][0];
+                const firstInfo = subInfoMap[firstName] || {};
+                const firstLink = item.querySelector('.sub-list a');
+                if (firstInfo.type === 'grid') {
+                  exitGallery();
+                  closeSplitView();
+                  document.querySelectorAll('.sub-list a').forEach(a => a.classList.remove('active'));
+                  if (firstLink) firstLink.classList.add('active');
+                  let targetCatId = null;
+                  categories.forEach(c => {
+                    c.subcategories.forEach(s => { if (s.name === firstName) targetCatId = c.id; });
+                  });
+                  if (targetCatId) openGridView(targetCatId);
+                } else if (firstInfo.type === 'split') {
+                  exitGallery();
+                  closeGridView();
+                  document.querySelectorAll('.sub-list a').forEach(a => a.classList.remove('active'));
+                  if (firstLink) firstLink.classList.add('active');
+                  openSplitView(firstName);
+                } else {
+                  closeGridView();
+                  closeSplitView();
+                  enterGallery(firstName, firstLink);
+                }
+              }
             } else {
               exitGallery();
+              closeGridView();
+              closeSplitView();
             }
           }
         });
       });
 
       document.addEventListener('click', e => {
-        if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar') && !e.target.closest('#gallery-overlay')) {
+        if (gridViewMode || splitViewMode) return;
+        if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar') && !e.target.closest('#gallery-overlay') && !e.target.closest('#grid-view') && !e.target.closest('#split-view')) {
           navItems.forEach(i => i.classList.remove('open'));
           mobileSubBar.classList.remove('open');
           if (catPhotoMode) exitPhotoMode();
@@ -507,9 +797,19 @@
         }
       });
 
+      window.addEventListener('wheel', e => {
+        if (gridViewMode || splitViewMode) return;
+        e.preventDefault();
+        if (galleryMode) return;
+        const idx = catPhotoMode ? catCurrent : current;
+        (e.deltaY > 0 || e.deltaX > 0) ? goTo(idx + 1) : goTo(idx - 1);
+      }, { passive: false });
+
       window.addEventListener('keydown', e => {
+        if (gridViewMode || splitViewMode) return;
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo((catPhotoMode ? catCurrent : current) + 1);
         if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo((catPhotoMode ? catCurrent : current) - 1);
+        if (e.key === 'Escape') { closeGridView(); closeSplitView(); exitGallery(); navItems.forEach(i => i.classList.remove('open')); }
       });
     })();
   </script>

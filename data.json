@@ -489,14 +489,60 @@
           "name": "WEDDING",
           "title": "",
           "subtitle": "",
-          "photos": []
+          "type": "split",
+          "photos": [
+            "./images/DSC01334.JPG",
+            "./images/DSC01957.JPG",
+            "./images/DSC02216.JPG",
+            "./images/DSC02393.JPG",
+            "./images/DSC02546.JPG",
+            "./images/DSC03327.JPG",
+            "./images/DSC03858.JPG",
+            "./images/DSC03933-2.JPG",
+            "./images/DSC03877.JPG",
+            "./images/DSC03417.JPG",
+            "./images/DSC03336.JPG",
+            "./images/DSC02729.JPG"
+          ]
         },
         {
-          "id": "space",
-          "name": "INTERIOR",
-          "title": "",
+          "id": "interior",
+          "name": "Interior",
+          "title": "Interior",
           "subtitle": "",
-          "photos": []
+          "type": "grid",
+          "projects": [
+            {
+              "name": "Project 01",
+              "coverPhoto": "./images/DSC01256.JPG",
+              "photos": ["./images/DSC01256.JPG", "./images/DSC01334.JPG", "./images/DSC01957.JPG"]
+            },
+            {
+              "name": "Project 02",
+              "coverPhoto": "./images/DSC02216.JPG",
+              "photos": ["./images/DSC02216.JPG", "./images/DSC02393.JPG", "./images/DSC02546.JPG"]
+            },
+            {
+              "name": "Project 03",
+              "coverPhoto": "./images/DSC03327.JPG",
+              "photos": ["./images/DSC03327.JPG", "./images/DSC03858.JPG", "./images/DSC03933-2.JPG"]
+            },
+            {
+              "name": "Project 04",
+              "coverPhoto": "./images/22FA7B59-0450-4CCA-9E02-85496CA06066.JPG",
+              "photos": ["./images/22FA7B59-0450-4CCA-9E02-85496CA06066.JPG", "./images/395577AD-ABA3-4C88-9E13-B53F79D32834.JPG"]
+            },
+            {
+              "name": "Project 05",
+              "coverPhoto": "./images/6D55E0DF-18FB-427A-A7F1-496689AD6CE8.JPG",
+              "photos": ["./images/6D55E0DF-18FB-427A-A7F1-496689AD6CE8.JPG", "./images/88F17B32-5C41-4B35-AAE7-870BCC81E98D.JPG"]
+            },
+            {
+              "name": "Project 06",
+              "coverPhoto": "./images/E83CD9E7-D748-457F-9D63-940DF73708B8.JPG",
+              "photos": ["./images/E83CD9E7-D748-457F-9D63-940DF73708B8.JPG", "./images/IMG_9481.JPG"]
+            }
+          ]
         }
       ]
     }
