@@ -26,7 +26,22 @@
     "./images/DSC03933-2.JPG",
     "./images/E83CD9E7-D748-457F-9D63-940DF73708B8.JPG",
     "./images/IMG_9481.JPG",
-    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775378221/lsd4wdkt7loxevkwm2jc.jpg"
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775378221/lsd4wdkt7loxevkwm2jc.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488284/acufjht0kd0hcikxooci.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488285/jrormbdtmhpbi3koecmn.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488447/vrqu0ms96oi5muhrd6zh.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488483/jqqx8dxfzkwgkjbqdkyg.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488656/p5xphjjuoqlnpqx4o2us.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488659/auzblonx73fwzzstwfls.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488713/tc2idclyumwprkqquh0w.png",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488715/xauowgptn4g9tgqwjyck.png",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488945/nd4zvd3hxmzlcdcyfoti.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488981/tcm8m7fnukskklyzfrvf.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489063/kupiwtt5c4eqstjntgdt.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489065/m7j7vnkwmgnymuigsplp.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489069/kebua6jiyto46knekqu9.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489071/md4hqqu7zjhwvxbyimlp.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489072/z1rzusl9rc0zpozv0opz.jpg"
   ],
   "categories": [
     {
@@ -39,26 +54,23 @@
           "title": "Seoul, KR",
           "subtitle": "2026 South Korea street photography.",
           "photos": [
-            "./images/DSC01006.JPG",
-            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775378221/lsd4wdkt7loxevkwm2jc.jpg"
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488284/acufjht0kd0hcikxooci.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488285/jrormbdtmhpbi3koecmn.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488447/vrqu0ms96oi5muhrd6zh.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488483/jqqx8dxfzkwgkjbqdkyg.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488656/p5xphjjuoqlnpqx4o2us.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488659/auzblonx73fwzzstwfls.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488713/tc2idclyumwprkqquh0w.png",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488715/xauowgptn4g9tgqwjyck.png"
           ]
         },
         {
           "id": "december-in-island",
           "name": "ISLAND",
           "title": "ISLAND",
-          "subtitle": "2025 Island street photography.",
+          "subtitle": "2025 Island photography.",
           "photos": [
-            "./images/DSC00767.JPG",
-            "./images/DSC01018.JPG",
-            "./images/DSC01339.JPG",
-            "./images/DSC02414.JPG",
-            "./images/DSC02729.JPG",
-            "./images/DSC03336.JPG",
-            "./images/DSC03417.JPG",
-            "./images/DSC03877.JPG",
-            "./images/IMG_9481.JPG",
-            "./images/098DE0F3-54EF-4637-AE30-C47B0A97048F.JPG"
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488945/nd4zvd3hxmzlcdcyfoti.jpg"
           ]
         },
         {
@@ -73,7 +85,14 @@
           "name": "Malmö, SE",
           "title": "Malmö, SE",
           "subtitle": "2025 Sweden street photography.",
-          "photos": []
+          "photos": [
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775488981/tcm8m7fnukskklyzfrvf.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489063/kupiwtt5c4eqstjntgdt.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489065/m7j7vnkwmgnymuigsplp.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489069/kebua6jiyto46knekqu9.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489071/md4hqqu7zjhwvxbyimlp.jpg",
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775489072/z1rzusl9rc0zpozv0opz.jpg"
+          ]
         },
         {
           "id": "berlin-de-1775486063651",
