@@ -81,6 +81,7 @@
       top: calc(100% + 6px);
       left: 0;
       white-space: nowrap;
+      z-index: 101;
     }
 
     .nav-item.open .sub-list { display: flex; }
@@ -414,6 +415,15 @@
 
   <script>
     (async () => {
+      // ── Cloudinary 이미지 최적화 헬퍼 ──
+      function optimizeImg(src, { w = 2000, q = 'auto', thumb = false } = {}) {
+        if (!src || !src.includes('res.cloudinary.com')) return src;
+        const params = thumb
+          ? 'f_auto,q_auto,w_600'
+          : `f_auto,q_${q},w_${w}`;
+        return src.replace('/upload/', `/upload/${params}/`);
+      }
+
       // ── data.json 로드 ──
       let siteData;
       try {
@@ -442,7 +452,7 @@
       all.forEach((src, i) => {
         const img = document.createElement('img');
         img.className = 'photo' + (i === 0 ? ' active' : '');
-        img.src = src;
+        img.src = optimizeImg(src);
         img.alt = '';
         stage.appendChild(img);
       });
@@ -581,11 +591,11 @@
         // 썸네일 렌더
         splitMasonry.innerHTML = photoSet.map((src, i) => `
           <div class="split-thumb${i === 0 ? ' active' : ''}" data-src="${src}">
-            <img src="${src}" loading="lazy" alt="">
+            <img src="${optimizeImg(src, { thumb: true })}" loading="lazy" alt="">
           </div>`).join('');
 
         // 대표 사진 초기값
-        splitMainImg.src = photoSet[0];
+        splitMainImg.src = optimizeImg(photoSet[0]);
 
         // 썸네일 클릭 이벤트
         splitMasonry.querySelectorAll('.split-thumb').forEach(thumb => {
@@ -594,7 +604,7 @@
             thumb.classList.add('active');
             splitMainImg.style.opacity = '0';
             setTimeout(() => {
-              splitMainImg.src = thumb.dataset.src;
+              splitMainImg.src = optimizeImg(thumb.dataset.src);
               splitMainImg.style.opacity = '1';
             }, 150);
           });
@@ -621,7 +631,7 @@
           : projects.map(p => `
               <div class="grid-item">
                 <div class="grid-item-thumb">
-                  ${p.coverPhoto ? `<img src="${p.coverPhoto}" alt="${p.name}" loading="lazy">` : ''}
+                  ${p.coverPhoto ? `<img src="${optimizeImg(p.coverPhoto, { thumb: true })}" alt="${p.name}" loading="lazy">` : ''}
                 </div>
                 <div class="grid-item-name">${p.name}</div>
               </div>`).join('');
