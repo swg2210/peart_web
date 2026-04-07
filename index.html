@@ -1004,7 +1004,14 @@
       });
 
       window.addEventListener('wheel', e => {
-        if (projectDetailMode) return;
+        if (projectDetailMode) {
+          // 상하 스크롤 → 가로 스크롤 변환 (deltaX가 있으면 트랙패드 좌우 → 그대로)
+          if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+            e.preventDefault();
+            projectScroll.scrollLeft += e.deltaY;
+          }
+          return;
+        }
         if (gridViewMode || splitViewMode) return;
         e.preventDefault();
         if (galleryMode) return;
