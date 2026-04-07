@@ -305,6 +305,60 @@
       .grid-container { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
     }
 
+    /* ── PROJECT DETAIL VIEW (Interior 프로젝트 가로 스크롤) ── */
+    #project-detail {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 85;
+      overflow: hidden;
+    }
+
+    #project-detail.open { display: flex; align-items: center; }
+
+    .project-scroll {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      height: 70vh;
+      padding: 0 36px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+
+    .project-scroll::-webkit-scrollbar { display: none; }
+
+    .project-scroll img {
+      height: 100%;
+      width: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    #project-detail-info {
+      position: fixed;
+      bottom: 28px;
+      left: 36px;
+      font-size: 0.78rem;
+      font-weight: 300;
+      color: #111;
+      z-index: 86;
+    }
+
+    #project-detail-info .proj-count {
+      font-size: 0.65rem;
+      color: #999;
+      margin-left: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .project-scroll { height: 50vh; padding: 0 20px; gap: 10px; }
+      #project-detail-info { bottom: 20px; left: 20px; }
+    }
+
     /* ── SPLIT VIEW (Wedding) ── */
     #split-view {
       display: none;
@@ -416,6 +470,11 @@
     <div id="split-thumbs">
       <div class="split-masonry" id="split-masonry"></div>
     </div>
+  </div>
+
+  <div id="project-detail">
+    <div class="project-scroll" id="project-scroll"></div>
+    <div id="project-detail-info"></div>
   </div>
 
   <script>
@@ -626,11 +685,15 @@
       const splitView     = document.getElementById('split-view');
       const splitMainImg  = document.getElementById('split-main-img');
       const splitMasonry  = document.getElementById('split-masonry');
+      const projectDetail = document.getElementById('project-detail');
+      const projectScroll = document.getElementById('project-scroll');
+      const projectDetailInfo = document.getElementById('project-detail-info');
       const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
       let galleryMode = false;
       let gridViewMode = false;
       let splitViewMode = false;
+      let projectDetailMode = false;
       let currentActiveLink = null;
       let galleryTimer = null;
 
@@ -708,12 +771,68 @@
               </div>`).join('');
         gridView.classList.add('open');
         counter.style.display = 'none';
+
+        // 그리드 아이템 클릭 → 프로젝트 상세 뷰
+        gridContainer.querySelectorAll('.grid-item').forEach((item, i) => {
+          item.addEventListener('click', () => {
+            if (projects[i]) openProjectDetail(projects[i]);
+          });
+        });
       }
 
       function closeGridView() {
         gridViewMode = false;
         gridView.classList.remove('open');
         counter.style.display = '';
+      }
+
+      let projectPhotoCount = 0;
+      let projectCurrentIdx = 0;
+
+      function openProjectDetail(project) {
+        projectDetailMode = true;
+        const photos = project.photos || [];
+        projectPhotoCount = photos.length;
+        projectCurrentIdx = 0;
+        projectScroll.innerHTML = photos.map(src =>
+          `<img src="${optimizeImg(src)}" alt="" loading="lazy">`
+        ).join('');
+        projectDetail.classList.add('open');
+        history.pushState({ view: 'projectDetail' }, '');
+        // 기존 counter UI 활용
+        counter.style.display = '';
+        counter.textContent = `01 / ${String(projectPhotoCount).padStart(2, '0')}`;
+
+        // 스크롤 위치에 따라 counter 업데이트
+        projectScroll._scrollHandler = () => {
+          const imgs = projectScroll.querySelectorAll('img');
+          const scrollCenter = projectScroll.scrollLeft + projectScroll.clientWidth / 2;
+          let closest = 0;
+          let minDist = Infinity;
+          imgs.forEach((img, i) => {
+            const center = img.offsetLeft + img.offsetWidth / 2;
+            const dist = Math.abs(center - scrollCenter);
+            if (dist < minDist) { minDist = dist; closest = i; }
+          });
+          if (closest !== projectCurrentIdx) {
+            projectCurrentIdx = closest;
+            counter.textContent = `${String(projectCurrentIdx + 1).padStart(2, '0')} / ${String(projectPhotoCount).padStart(2, '0')}`;
+          }
+        };
+        projectScroll.addEventListener('scroll', projectScroll._scrollHandler, { passive: true });
+
+        // 마우스 휠 → 가로 스크롤은 window wheel 리스너에서 처리
+      }
+
+      function closeProjectDetail() {
+        projectDetailMode = false;
+        projectDetail.classList.remove('open');
+        projectScroll.innerHTML = '';
+        counter.style.display = 'none';
+        if (projectScroll._scrollHandler) {
+          projectScroll.removeEventListener('scroll', projectScroll._scrollHandler);
+          projectScroll._scrollHandler = null;
+        }
       }
 
       function enterGallery(title, activeLink) {
@@ -782,6 +901,12 @@
           const isOpen = item.classList.contains('open');
           const navListEl = document.querySelector('.nav-list');
           const isGridCat = !!gridDataMap[cat];
+
+          // 프로젝트 상세 뷰 열려있으면 닫기
+          if (projectDetailMode) {
+            closeProjectDetail();
+            if (history.state && history.state.view === 'projectDetail') history.back();
+          }
 
           if (isMobile()) {
             const sameOpen = mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
@@ -869,8 +994,8 @@
       });
 
       document.addEventListener('click', e => {
-        if (gridViewMode || splitViewMode) return;
-        if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar') && !e.target.closest('#gallery-overlay') && !e.target.closest('#grid-view') && !e.target.closest('#split-view')) {
+        if (projectDetailMode || gridViewMode || splitViewMode) return;
+        if (!e.target.closest('#main-nav') && !e.target.closest('#mobile-sub-bar') && !e.target.closest('#gallery-overlay') && !e.target.closest('#grid-view') && !e.target.closest('#split-view') && !e.target.closest('#project-detail')) {
           navItems.forEach(i => i.classList.remove('open'));
           mobileSubBar.classList.remove('open');
           if (catPhotoMode) exitPhotoMode();
@@ -879,6 +1004,7 @@
       });
 
       window.addEventListener('wheel', e => {
+        if (projectDetailMode) return;
         if (gridViewMode || splitViewMode) return;
         e.preventDefault();
         if (galleryMode) return;
@@ -887,10 +1013,22 @@
       }, { passive: false });
 
       window.addEventListener('keydown', e => {
+        if (projectDetailMode) {
+          if (e.key === 'ArrowRight') projectScroll.scrollLeft += 300;
+          if (e.key === 'ArrowLeft') projectScroll.scrollLeft -= 300;
+          return;
+        }
         if (gridViewMode || splitViewMode) return;
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo((catPhotoMode ? catCurrent : current) + 1);
         if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo((catPhotoMode ? catCurrent : current) - 1);
         if (e.key === 'Escape') { closeGridView(); closeSplitView(); exitGallery(); navItems.forEach(i => i.classList.remove('open')); }
+      });
+
+      // 브라우저 뒤로가기 → 프로젝트 상세에서 그리드로 복귀
+      window.addEventListener('popstate', (e) => {
+        if (projectDetailMode) {
+          closeProjectDetail();
+        }
       });
     })();
   </script>
