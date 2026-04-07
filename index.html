@@ -84,6 +84,11 @@
       z-index: 101;
     }
 
+    .sub-list.horizontal {
+      flex-direction: row;
+      gap: 8px;
+    }
+
     .nav-item.open .sub-list { display: flex; }
 
     .sub-list a {
@@ -521,9 +526,10 @@
         const li = document.createElement('li');
         li.className = 'nav-item';
         li.dataset.cat = cat.id;
+        const hasSpecialType = cat.subcategories.some(s => s.type === 'grid' || s.type === 'split');
         li.innerHTML = `
           <span class="nav-label">${cat.label}</span>
-          <ul class="sub-list">
+          <ul class="sub-list${hasSpecialType ? ' horizontal' : ''}">
             ${cat.subcategories.map(s => `<li><a href="#">${s.name}</a></li>`).join('')}
           </ul>`;
         navList.appendChild(li);
