@@ -41,6 +41,7 @@
       font-weight: 700;
       font-size: 1rem;
       letter-spacing: -0.01em;
+      cursor: pointer;
     }
 
     .nav-list {
@@ -1036,6 +1037,17 @@
         if (projectDetailMode) {
           closeProjectDetail();
         }
+      });
+
+      // jinho.kim 로고 클릭 → 메인으로 복귀
+      document.querySelector('.header-brand').addEventListener('click', () => {
+        if (projectDetailMode) closeProjectDetail();
+        closeGridView();
+        closeSplitView();
+        if (catPhotoMode) exitPhotoMode();
+        exitGallery();
+        navItems.forEach(i => i.classList.remove('open'));
+        mobileSubBar.classList.remove('open');
       });
     })();
   </script>
