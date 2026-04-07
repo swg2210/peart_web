@@ -530,14 +530,13 @@
       });
 
       // ── 포토 전환 ──
-      async function goTo(idx) {
+      function goTo(idx) {
         if (busy) return;
         if (catPhotoMode) {
           idx = Math.max(0, Math.min(catPhotoIndices.length - 1, idx));
           if (idx === catCurrent) return;
           busy = true;
-          await loadPhoto(catPhotoIndices[idx]);
-          preloadAround(catPhotoIndices[idx], catPhotoIndices);
+          // 카테고리 모드에선 enterPhotoMode에서 이미 전부 로드됨
           photos[catPhotoIndices[catCurrent]].classList.remove('active');
           photos[catPhotoIndices[idx]].classList.add('active');
           catCurrent = idx;
@@ -548,7 +547,11 @@
         idx = Math.max(0, Math.min(N - 1, idx));
         if (idx === current) return;
         busy = true;
-        await loadPhoto(idx);
+        // 다음 사진 즉시 로드 + 주변 프리로드
+        if (!loadedSet.has(idx) && photos[idx].dataset.lazySrc) {
+          photos[idx].src = photos[idx].dataset.lazySrc;
+          loadedSet.add(idx);
+        }
         preloadAround(idx);
         photos[current].classList.remove('active');
         photos[idx].classList.add('active');
@@ -557,7 +560,7 @@
         setTimeout(() => { busy = false; }, 200);
       }
 
-      async function enterPhotoMode(subName) {
+      function enterPhotoMode(subName) {
         const photoSet = catPhotosMap[subName] || [];
         if (!photoSet.length) return;
         catPhotoMode = true;
@@ -573,9 +576,14 @@
           }
         });
         if (!catPhotoIndices.length) { catPhotoMode = false; return; }
+        // 해당 카테고리 사진 전체 즉시 로드
+        catPhotoIndices.forEach(idx => {
+          if (!loadedSet.has(idx) && photos[idx].dataset.lazySrc) {
+            photos[idx].src = photos[idx].dataset.lazySrc;
+            loadedSet.add(idx);
+          }
+        });
         catCurrent = 0;
-        await loadPhoto(catPhotoIndices[0]);
-        preloadAround(catPhotoIndices[0], catPhotoIndices);
         photos[catPhotoIndices[0]].classList.add('active');
         counter.textContent = `01 / ${String(catPhotoIndices.length).padStart(2, '0')}`;
       }
