@@ -455,9 +455,9 @@
       all.forEach((src, i) => {
         const img = document.createElement('img');
         img.className = 'photo' + (i === 0 ? ' active' : '');
-        const optimized = optimizeImg(src);
-        img.dataset.lazySrc = optimized;
-        if (i === 0) { img.src = optimized; loadedSet.add(0); }
+        img.dataset.originalSrc = src;
+        img.dataset.lazySrc = optimizeImg(src);
+        if (i === 0) { img.src = img.dataset.lazySrc; loadedSet.add(0); }
         img.alt = '';
         stage.appendChild(img);
       });
@@ -567,10 +567,10 @@
         photos.forEach(p => p.classList.remove('active'));
         catPhotoIndices = [];
         photos.forEach((p, i) => {
-          const psrc = decodeURIComponent(p.dataset.lazySrc || p.src);
+          const psrc = decodeURIComponent(p.dataset.originalSrc || '');
           if (photoSet.some(ps => {
             const normalized = ps.startsWith('http') ? ps : ps.replace('./', '');
-            return psrc.endsWith(normalized) || psrc.includes(normalized);
+            return psrc.endsWith(normalized) || psrc.includes(normalized) || normalized.endsWith(psrc.split('/').pop());
           })) {
             catPhotoIndices.push(i);
           }
