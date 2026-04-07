@@ -449,16 +449,35 @@
       const stage   = document.getElementById('stage');
       const counter = document.getElementById('counter');
 
+      const PRELOAD_RANGE = 8;
+      const loadedSet = new Set();
+
       all.forEach((src, i) => {
         const img = document.createElement('img');
         img.className = 'photo' + (i === 0 ? ' active' : '');
-        img.src = optimizeImg(src);
+        img.dataset.lazySrc = optimizeImg(src);
         img.alt = '';
         stage.appendChild(img);
       });
 
       const photos = Array.from(stage.querySelectorAll('.photo'));
       let current = 0;
+
+      function preloadAround(center, indices) {
+        const list = indices || Array.from({ length: N }, (_, i) => i);
+        const ci = indices ? list.indexOf(center) : center;
+        if (ci === -1) return;
+        const start = Math.max(0, ci - PRELOAD_RANGE);
+        const end = Math.min(list.length - 1, ci + PRELOAD_RANGE);
+        for (let k = start; k <= end; k++) {
+          const idx = list[k];
+          if (!loadedSet.has(idx) && photos[idx].dataset.lazySrc) {
+            photos[idx].src = photos[idx].dataset.lazySrc;
+            loadedSet.add(idx);
+          }
+        }
+      }
+      preloadAround(0);
       let busy = false;
       let catPhotoMode = false;
       let catPhotoIndices = [];
@@ -504,6 +523,7 @@
           idx = Math.max(0, Math.min(catPhotoIndices.length - 1, idx));
           if (idx === catCurrent) return;
           busy = true;
+          preloadAround(catPhotoIndices[idx], catPhotoIndices);
           photos[catPhotoIndices[catCurrent]].classList.remove('active');
           photos[catPhotoIndices[idx]].classList.add('active');
           catCurrent = idx;
@@ -514,6 +534,7 @@
         idx = Math.max(0, Math.min(N - 1, idx));
         if (idx === current) return;
         busy = true;
+        preloadAround(idx);
         photos[current].classList.remove('active');
         photos[idx].classList.add('active');
         current = idx;
@@ -528,7 +549,7 @@
         photos.forEach(p => p.classList.remove('active'));
         catPhotoIndices = [];
         photos.forEach((p, i) => {
-          const psrc = decodeURIComponent(p.src);
+          const psrc = decodeURIComponent(p.dataset.lazySrc || p.src);
           if (photoSet.some(ps => {
             const normalized = ps.startsWith('http') ? ps : ps.replace('./', '');
             return psrc.endsWith(normalized) || psrc.includes(normalized);
@@ -538,6 +559,7 @@
         });
         if (!catPhotoIndices.length) { catPhotoMode = false; return; }
         catCurrent = 0;
+        preloadAround(catPhotoIndices[0], catPhotoIndices);
         photos[catPhotoIndices[0]].classList.add('active');
         counter.textContent = `01 / ${String(catPhotoIndices.length).padStart(2, '0')}`;
       }
