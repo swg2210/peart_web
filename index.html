@@ -455,7 +455,9 @@
       all.forEach((src, i) => {
         const img = document.createElement('img');
         img.className = 'photo' + (i === 0 ? ' active' : '');
-        img.dataset.lazySrc = optimizeImg(src);
+        const optimized = optimizeImg(src);
+        img.dataset.lazySrc = optimized;
+        if (i === 0) { img.src = optimized; loadedSet.add(0); }
         img.alt = '';
         stage.appendChild(img);
       });
