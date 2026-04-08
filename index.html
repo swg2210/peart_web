@@ -1085,18 +1085,21 @@
           const navListEl = document.querySelector('.nav-list');
           const isGridCat = !!gridDataMap[cat];
 
-          // 프로젝트 상세 뷰 열려있으면 닫기
+          // 열려있는 뷰 모두 닫기
+          const wasInDetail = projectDetailMode;
           if (projectDetailMode) {
             closeProjectDetail();
             if (history.state && history.state.view === 'projectDetail') history.back();
           }
+          if (splitViewMode) closeSplitView();
+          if (gridViewMode) closeGridView();
 
           if (isMobile()) {
-            const sameOpen = mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
+            // 상세 뷰에서 돌아온 경우는 같은 카테고리여도 다시 열기
+            const sameOpen = !wasInDetail && mobileSubBar.classList.contains('open') && mobileSubBar.dataset.cat === cat;
             navItems.forEach(i => i.classList.remove('open'));
             if (sameOpen) {
               mobileSubBar.classList.remove('open');
-              closeGridView();
             } else {
               mobileSubBar.dataset.cat = cat;
 
