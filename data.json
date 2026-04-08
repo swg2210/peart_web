@@ -490,19 +490,22 @@
           "title": "",
           "subtitle": "",
           "type": "split",
-          "photos": [
-            "./images/DSC01334.JPG",
-            "./images/DSC01957.JPG",
-            "./images/DSC02216.JPG",
-            "./images/DSC02393.JPG",
-            "./images/DSC02546.JPG",
-            "./images/DSC03327.JPG",
-            "./images/DSC03858.JPG",
-            "./images/DSC03933-2.JPG",
-            "./images/DSC03877.JPG",
-            "./images/DSC03417.JPG",
-            "./images/DSC03336.JPG",
-            "./images/DSC02729.JPG"
+          "projects": [
+            {
+              "name": "Wedding 01",
+              "coverPhoto": "./images/DSC01334.JPG",
+              "photos": ["./images/DSC01334.JPG", "./images/DSC01957.JPG", "./images/DSC02216.JPG", "./images/DSC02393.JPG"]
+            },
+            {
+              "name": "Wedding 02",
+              "coverPhoto": "./images/DSC02546.JPG",
+              "photos": ["./images/DSC02546.JPG", "./images/DSC03327.JPG", "./images/DSC03858.JPG", "./images/DSC03933-2.JPG"]
+            },
+            {
+              "name": "Wedding 03",
+              "coverPhoto": "./images/DSC03877.JPG",
+              "photos": ["./images/DSC03877.JPG", "./images/DSC03417.JPG", "./images/DSC03336.JPG", "./images/DSC02729.JPG"]
+            }
           ]
         },
         {

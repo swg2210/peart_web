@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>jinho.kim</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +14,7 @@
     html, body {
       width: 100%; height: 100%;
       overflow: hidden;
+      overscroll-behavior: none;
       background: #ffffff;
       color: #111111;
       font-family: 'Noto Sans KR', sans-serif;
@@ -124,8 +125,10 @@
       #mobile-sub-bar {
         display: none;
         position: fixed;
+        top: 48px;
         left: 20px;
-        z-index: 200;
+        right: 20px;
+        z-index: 300;
         padding: 0;
       }
 
@@ -135,6 +138,8 @@
         list-style: none;
         display: flex;
         gap: 20px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       #mobile-sub-list a {
@@ -229,8 +234,9 @@
       z-index: 100;
     }
 
-    @media (max-width: 600px) {
-      .photo { max-width: 90vw; max-height: 72vh; }
+    @media (max-width: 768px) {
+      #stage { top: 56px; bottom: 0; }
+      .photo { max-width: 92vw; max-height: calc(100vh - 56px - 40px); }
     }
 
     @media (max-width: 768px) {
@@ -361,6 +367,8 @@
     }
 
     /* ── SPLIT VIEW (Wedding) ── */
+    #split-mobile-gallery { display: none; }
+
     #split-view {
       display: none;
       position: fixed;
@@ -432,11 +440,67 @@
     .split-thumb.active img { opacity: 0.4; }
 
     @media (max-width: 768px) {
-      #split-view { flex-direction: column; }
-      #split-main  { flex: 0 0 50vh; padding: 70px 20px 16px; }
-      #split-thumbs { padding: 16px 20px 40px; }
-      .split-masonry { grid-template-columns: repeat(3, 1fr); gap: 5px; }
-      .split-thumb:nth-child(n) { aspect-ratio: 1/1; }
+      /* 모바일: PC split 숨기고 가로 스크롤 포스터 */
+      #split-view.open { display: block; }
+      #split-main  { display: none; }
+      #split-thumbs { display: none; }
+
+      #split-view.open #split-mobile-gallery {
+        display: flex;
+        flex-direction: row;
+        position: absolute;
+        inset: 0;
+        padding: 0 20px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .split-poster {
+        flex: 0 0 auto;
+        height: 50vh;
+        scroll-snap-align: center;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+      }
+
+      .split-poster img {
+        height: 100%;
+        width: auto;
+        object-fit: contain;
+        transition: opacity 0.15s;
+      }
+
+      .split-poster:active img { opacity: 0.8; }
+
+      .split-poster-name {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        color: #fff;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      }
+    }
+
+    /* 포스터 → 상세 줌인 트랜지션 */
+    #project-detail.zoom-enter {
+      animation: zoomFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes zoomFadeIn {
+      0%   { opacity: 0; transform: scale(1.03); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* 데스크톱: 모바일 갤러리 숨김 */
+    @media (min-width: 769px) {
+      #split-mobile-gallery { display: none !important; }
     }
   </style>
 </head>
@@ -471,6 +535,7 @@
     <div id="split-thumbs">
       <div class="split-masonry" id="split-masonry"></div>
     </div>
+    <div id="split-mobile-gallery"></div>
   </div>
 
   <div id="project-detail">
@@ -568,7 +633,7 @@
       const subInfoMap   = {};  // subName -> { title, subtitle, type }
       const catPhotosMap = {};  // subName -> [photoSrc, ...]
       const gridDataMap  = {};  // catId -> sub  (type=grid)
-      const splitDataMap = {};  // subName -> [photoSrc, ...]  (type=split)
+      const splitDataMap = {};  // subName -> { projects: [...], allPhotos: [...] }  (type=split)
 
       categories.forEach(cat => {
         subDataMap[cat.id] = cat.subcategories.map(s => s.name);
@@ -576,7 +641,11 @@
           subInfoMap[sub.name]   = { title: sub.title, subtitle: sub.subtitle, type: sub.type };
           catPhotosMap[sub.name] = sub.photos || [];
           if (sub.type === 'grid')  gridDataMap[cat.id]    = sub;
-          if (sub.type === 'split') splitDataMap[sub.name] = sub.photos || [];
+          if (sub.type === 'split') {
+            const projects = sub.projects || [];
+            const allPhotos = projects.flatMap(p => p.photos || []);
+            splitDataMap[sub.name] = { projects, allPhotos };
+          }
         });
       });
 
@@ -699,59 +768,87 @@
       let galleryTimer = null;
 
       // ── 스플릿 뷰 (Wedding) ──
+      const splitMobileGallery = document.getElementById('split-mobile-gallery');
+
       function openSplitView(subName) {
-        const photoSet = splitDataMap[subName] || [];
-        if (!photoSet.length) return;
+        const data = splitDataMap[subName];
+        if (!data || !data.projects.length) return;
         splitViewMode = true;
 
-        // 썸네일 렌더 — src 비워두고 IntersectionObserver로 lazy load
-        splitMasonry.innerHTML = photoSet.map((src, i) => `
-          <div class="split-thumb${i === 0 ? ' active' : ''}" data-src="${src}">
-            <img data-lazy="${optimizeImg(src, { thumb: true })}" alt="">
-          </div>`).join('');
+        if (isMobile()) {
+          // 모바일: 가로 스크롤 포스터 뷰
+          splitMobileGallery.innerHTML = data.projects.map((proj, i) => `
+            <div class="split-poster" data-project-idx="${i}">
+              <img src="${optimizeImg(proj.coverPhoto)}" alt="${proj.name}" loading="lazy">
+              <div class="split-poster-name">${proj.name}</div>
+            </div>`).join('');
 
-        // 대표 사진 초기값
-        splitMainImg.src = optimizeImg(photoSet[0]);
+          // 포스터 클릭 → 줌인 트랜지션 → 프로젝트 상세
+          splitMobileGallery.querySelectorAll('.split-poster').forEach(poster => {
+            poster.addEventListener('click', () => {
+              const idx = parseInt(poster.dataset.projectIdx);
+              projectDetail.classList.add('zoom-enter');
+              openProjectDetail(data.projects[idx]);
+              projectDetail.addEventListener('animationend', () => {
+                projectDetail.classList.remove('zoom-enter');
+              }, { once: true });
+            });
+          });
 
-        // 썸네일 lazy loading (IntersectionObserver)
-        const splitThumbsEl = document.getElementById('split-thumbs');
-        const splitObserver = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const img = entry.target;
-              if (img.dataset.lazy) {
-                img.src = img.dataset.lazy;
-                delete img.dataset.lazy;
+          splitView.classList.add('open');
+          counter.style.display = 'none';
+
+        } else {
+          // PC: 기존 split 뷰 (allPhotos 사용)
+          const photoSet = data.allPhotos;
+          if (!photoSet.length) return;
+
+          splitMasonry.innerHTML = photoSet.map((src, i) => `
+            <div class="split-thumb${i === 0 ? ' active' : ''}" data-src="${src}">
+              <img data-lazy="${optimizeImg(src, { thumb: true })}" alt="">
+            </div>`).join('');
+
+          splitMainImg.src = optimizeImg(photoSet[0]);
+
+          const splitThumbsEl = document.getElementById('split-thumbs');
+          const splitObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.lazy) {
+                  img.src = img.dataset.lazy;
+                  delete img.dataset.lazy;
+                }
+                splitObserver.unobserve(img);
               }
-              splitObserver.unobserve(img);
-            }
+            });
+          }, { root: splitThumbsEl, rootMargin: '200px 0px' });
+
+          splitMasonry.querySelectorAll('.split-thumb img').forEach(img => {
+            splitObserver.observe(img);
           });
-        }, { root: splitThumbsEl, rootMargin: '200px 0px' });
 
-        splitMasonry.querySelectorAll('.split-thumb img').forEach(img => {
-          splitObserver.observe(img);
-        });
-
-        // 썸네일 클릭 이벤트
-        splitMasonry.querySelectorAll('.split-thumb').forEach(thumb => {
-          thumb.addEventListener('click', () => {
-            splitMasonry.querySelectorAll('.split-thumb').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
-            splitMainImg.style.opacity = '0';
-            setTimeout(() => {
-              splitMainImg.src = optimizeImg(thumb.dataset.src);
-              splitMainImg.style.opacity = '1';
-            }, 150);
+          splitMasonry.querySelectorAll('.split-thumb').forEach(thumb => {
+            thumb.addEventListener('click', () => {
+              splitMasonry.querySelectorAll('.split-thumb').forEach(t => t.classList.remove('active'));
+              thumb.classList.add('active');
+              splitMainImg.style.opacity = '0';
+              setTimeout(() => {
+                splitMainImg.src = optimizeImg(thumb.dataset.src);
+                splitMainImg.style.opacity = '1';
+              }, 150);
+            });
           });
-        });
 
-        splitView.classList.add('open');
-        counter.style.display = 'none';
+          splitView.classList.add('open');
+          counter.style.display = 'none';
+        }
       }
 
       function closeSplitView() {
         splitViewMode = false;
         splitView.classList.remove('open');
+        splitMobileGallery.innerHTML = '';
         counter.style.display = '';
       }
 

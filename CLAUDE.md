@@ -20,6 +20,7 @@ data.json        # 카테고리/사진 데이터
 api/config.js    # Cloudinary 설정
 api/save-data.js # 데이터 저장 API
 images/          # 로컬 이미지 파일들 (테스트용, 8~16MB 원본)
+film/            # 영상 파일 (로컬 테스트용, .gitignore 권장)
 CLAUDE.md        # 이 파일
 ```
 
@@ -65,29 +66,57 @@ CLAUDE.md        # 이 파일
 3. `bindSubLinks()`: 하위 카테고리 링크 클릭 시 type별 분기 처리
 4. grid/split 뷰 열려있을 때 빈 공간 클릭해도 메인으로 안 돌아감
 5. sub-list z-index: 101 (grid/split 뷰 위에 표시)
+6. jinho.kim 로고 클릭 → 모든 뷰 닫고 메인으로 복귀
+7. Commercial sub-list는 가로 배치 (.horizontal), Personal은 세로 유지
 
 ### Admin Panel
 - 기본 타입 (Personal 등): 사진 업로드/삭제/순서변경 + 타이틀/서브타이틀 편집
-- grid 타입 (Interior): `renderGridSubEditor` — 프로젝트 추가/삭제, 프로젝트별 사진 관리
-- split 타입 (Wedding): `renderSplitSubEditor` — 사진 업로드/삭제, 첫 사진이 대표사진
+- grid 타입 (Interior): `renderGridSubEditor` — Nav 이름 편집 + 프로젝트 추가/삭제, 프로젝트별 사진 관리
+- split 타입 (Wedding): `renderSplitSubEditor` — Nav 이름 편집 + 사진 업로드/삭제, 첫 사진이 대표사진
 
 ## Current State (2026-04-08)
 
 ### Commercial 카테고리
 - **Wedding** (type: split): 대표사진 + CSS columns masonry, 썸네일 클릭 시 대표사진 교체
-- **Interior** (type: grid): 3열 프로젝트 그리드, 6개 테스트 프로젝트 등록됨
+- **Interior** (type: grid): 3열 프로젝트 그리드, 프로젝트 클릭 시 가로 스크롤 상세 뷰
 
 ### Personal 카테고리
 - Seoul KR, ISLAND, Copenhagen DK, Malmö SE, Berlin DE, Berlin Bauhaus
 - 어드민에서 실제 사진 등록 완료 (Cloudinary URL)
 
 ## Pending Work
+- [ ] **모바일 전면 개편** — 아래 "모바일 개선 분석" 참고
+- [ ] **사진 캡션 기능** — allPhotos를 객체 배열({src, title, desc})로 변환, 하단 제목/설명 표시 (작업 시작했으나 원복됨)
+- [ ] **Film 뷰** — type "film" 영화관 스타일 영상 뷰 MVP 작업 시작했으나 원복됨. Cloudinary 유료 전환 필요 (255MB 영상, 무료 100MB 제한)
+- [ ] Film 어드민 관리 UI 구현
 - [ ] 렌더링 속도 추가 개선 (아직 느린 편)
-- [ ] 영상(mp4) 지원 검토 (Cloudinary 무료 플랜: 파일당 100MB, 총 25GB)
-- [ ] 모바일 최적화 확인
+
+## 모바일 개선 분석 (2026-04-08 분석 완료, 미적용)
+
+### Critical
+1. **사진이 헤더/카테고리 영역 침범** — `.photo`가 `position: absolute`라 stage padding이 안 먹힘. stage의 `inset`(top/bottom)을 조정하거나 다른 접근 필요
+2. **Photo Caption** — 모바일 스타일 아예 없음. 위치/크기/가독성 + safe area 대응 필요
+3. **Split View (Wedding)** — CSS columns인데 media query에서 grid-template-columns 사용 중 (적용 안 됨). `columns: 2` → `columns: 1` 로 수정 필요
+4. **Film View** — 버튼 터치 타겟 너무 작음, 영상 크기 미조정, 하단 UI 겹침
+5. **Safe Area** — 아이폰 노치/홈 인디케이터 전혀 고려 안 됨 (`env(safe-area-inset-*)` 미사용)
+6. **터치 타겟** — 네비/버튼 등 44px 미달
+
+### Moderate
+7. Counter 위치 — 하단/우측 여백 모바일에서 과도
+8. Gallery 타이틀 — 600px 이하 추가 축소 필요
+9. Grid View (Interior) — 상단 패딩 80px 과도
+10. Project Detail — 가로 스크롤 높이 모바일 최적화 필요
+11. 가로/세로 방향(Landscape) — 전혀 미대응
+12. hover → active — 모바일에서 hover 없음, :active 상태 필요
+
+### 모바일 작업 시 주의사항
+- `.photo`는 `position: absolute` → 부모 padding 무시됨. stage의 `top`/`bottom`을 직접 조정해야 함
+- CSS `display: none` → transition 불가. fade 효과가 필요하면 `opacity` + `pointer-events`로 처리
+- 모바일 미디어쿼리를 한 곳에 통합 관리할 것 (기존에 여러 곳에 산재)
 
 ## Design Reference
 - yosigo.es/commercial/ : Interior 그리드 레이아웃 참고
+- jonathanbertin.com/commissioned/discipline : 프로젝트 상세 가로 스크롤 참고 (네이티브 overflow-x: auto, JS 스크롤 변환 X)
 - 핀터레스트 스타일 masonry : Wedding split 뷰 참고
 
 ## Dev Notes
@@ -97,6 +126,8 @@ CLAUDE.md        # 이 파일
 - Vercel은 GitHub main push 시 자동 배포
 - images/ 폴더 원본은 8~16MB씩 (테스트용), 실서비스는 Cloudinary URL 사용
 - git push 시 `export PATH="/opt/homebrew/bin:$PATH"` 필요할 수 있음
+- Xcode 시뮬레이터: `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer` 필요, iOS 런타임 별도 다운로드
+- 시뮬레이터에서 터치 스와이프 안 먹힐 수 있음 — 인터랙션은 실기기에서 테스트
 
 ## Known Pitfalls
 1. **optimizeImg + URL 매칭**: Cloudinary URL에 최적화 파라미터 삽입 시 원본 URL과 달라짐 → 매칭은 반드시 originalSrc 사용
@@ -104,5 +135,8 @@ CLAUDE.md        # 이 파일
 3. **nav isGridCat 분기**: 상위 카테고리 클릭 시 type별로 바로 뷰를 여는 게 아니라, 항상 서브리스트 표시 후 첫 번째 서브의 type에 따라 분기
 4. **bindSubLinks 호출 타이밍**: 서브리스트 렌더 후 반드시 bindSubLinks 호출해야 클릭 이벤트 바인딩됨
 5. **lazy loading과 enterPhotoMode**: 카테고리 진입 시 해당 사진 전체 src 즉시 세팅 (async/await 방식은 setTimeout 콜백에서 동작 안 함)
-6. **가로 스크롤은 네이티브로**: JS로 deltaY→scrollLeft 강제 변환하면 부자연스러움 → overflow-x: auto + wheel 이벤트 안 건드리기 (jonathanbertin.com 방식)
+6. **가로 스크롤은 네이티브로**: JS로 deltaY→scrollLeft 강제 변환하면 부자연스러움 → overflow-x: auto 사용. 단, 마우스 휠(상하→가로)은 deltaY > deltaX 조건으로 JS 변환 필요
 7. **sub-list 가로/세로**: Commercial(grid/split 타입 포함)은 .horizontal 클래스로 가로 배치, Personal은 세로 유지
+8. **CSS display:none → transition 불가**: fade 효과 필요 시 opacity + pointer-events로 처리
+9. **뷰 전환 시 다른 뷰 닫기**: 새 뷰 열 때 반드시 다른 모든 뷰 닫아야 함
+10. **position: absolute 자식은 부모 padding 무시**: stage에 padding 줘도 .photo에 안 먹힘 → stage의 inset(top/bottom)을 직접 조정해야 함
