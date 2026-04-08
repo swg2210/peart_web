@@ -657,9 +657,134 @@ async function initApp() {
 // ────────────────────────────────────────────
 // SIDEBAR
 // ────────────────────────────────────────────
+function selectMainPhotos() {
+  selectedCatId = '__main__';
+  selectedSubId = null;
+  renderSidebar();
+  renderMainPhotosEditor();
+}
+
+function renderMainPhotosEditor() {
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('cat-editor').style.display  = 'none';
+  const el = document.getElementById('sub-editor');
+  el.style.display = 'block';
+
+  if (!siteData.allPhotos) siteData.allPhotos = [];
+  const photos = siteData.allPhotos;
+
+  el.innerHTML = `
+    <div class="section-header">
+      <div>
+        <h2>메인 사진 <span style="font-size:0.7rem;color:var(--text-dim);font-weight:300">홈 슬라이더</span></h2>
+        <div class="breadcrumb">첫 번째 사진이 인트로 커버로 사용됩니다</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="photos-section">
+      <h3>사진 (${photos.length}장)</h3>
+
+      <div class="upload-area" id="upload-area-main"
+           onclick="document.getElementById('file-input-main').click()"
+           ondragover="onDragOverUpload(event)"
+           ondragleave="onDragLeaveUpload(event,'upload-area-main')"
+           ondrop="onDropUploadMain(event)">
+        <div class="upload-icon">+</div>
+        <p>클릭하거나 드래그해서 사진 업로드</p>
+        <input type="file" id="file-input-main" multiple accept="image/*" style="display:none"
+          onchange="onFileSelectMain(event)">
+      </div>
+
+      <div id="upload-progress-main" class="upload-progress" style="display:none"></div>
+
+      <div class="photos-grid" id="photos-grid-main">
+        ${photos.map((src, i) => mainPhotoCardHTML(src, i)).join('')}
+      </div>
+
+      ${photos.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">아직 사진이 없습니다.</p>` : ''}
+    </div>`;
+}
+
+function mainPhotoCardHTML(src, index) {
+  const display = src.includes('cloudinary') ? src.replace('/upload/', '/upload/f_auto,q_auto,w_300/') : src;
+  return `<div class="photo-card" draggable="true"
+    ondragstart="onMainPhotoDragStart(event,${index})"
+    ondragover="onPhotoCardDragOver(event,this)"
+    ondragleave="onPhotoCardDragLeave(this)"
+    ondrop="onMainPhotoDrop(event,${index})">
+    <img src="${display}" loading="lazy" onerror="this.style.opacity=0.3">
+    <button class="photo-remove" onclick="removeMainPhoto(${index})">✕</button>
+  </div>`;
+}
+
+function removeMainPhoto(index) {
+  siteData.allPhotos.splice(index, 1);
+  renderMainPhotosEditor();
+}
+
+let mainDragSrcIndex = null;
+function onMainPhotoDragStart(e, index) {
+  mainDragSrcIndex = index;
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onMainPhotoDrop(e, targetIndex) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (mainDragSrcIndex === null || mainDragSrcIndex === targetIndex) return;
+  const photos = siteData.allPhotos;
+  const [moved] = photos.splice(mainDragSrcIndex, 1);
+  photos.splice(targetIndex, 0, moved);
+  mainDragSrcIndex = null;
+  renderMainPhotosEditor();
+}
+
+function onDropUploadMain(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/'));
+  if (files.length) uploadMainFiles(files);
+}
+
+function onFileSelectMain(e) {
+  const files = [...e.target.files];
+  if (files.length) uploadMainFiles(files);
+  e.target.value = '';
+}
+
+async function uploadMainFiles(files) {
+  const progressEl = document.getElementById('upload-progress-main');
+  progressEl.style.display = 'block';
+
+  for (let i = 0; i < files.length; i++) {
+    progressEl.textContent = `업로드 중... ${i + 1} / ${files.length}`;
+    try {
+      const url = await uploadToCloudinary(files[i]);
+      siteData.allPhotos.push(url);
+    } catch (err) {
+      progressEl.textContent = `오류: ${err.message}`;
+      await new Promise(r => setTimeout(r, 1500));
+    }
+  }
+
+  progressEl.style.display = 'none';
+  renderMainPhotosEditor();
+}
+
 function renderSidebar() {
   const container = document.getElementById('cat-list');
   container.innerHTML = '';
+
+  // 메인 사진 항목
+  const mainItem = document.createElement('div');
+  mainItem.className = 'cat-group';
+  mainItem.innerHTML = `
+    <div class="cat-header ${selectedCatId === '__main__' ? 'active' : ''}"
+         onclick="selectMainPhotos()">
+      <span class="cat-name">메인 사진</span>
+    </div>`;
+  container.appendChild(mainItem);
 
   siteData.categories.forEach(cat => {
     const group = document.createElement('div');

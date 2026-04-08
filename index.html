@@ -140,7 +140,9 @@
         gap: 20px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
       }
+      #mobile-sub-list::-webkit-scrollbar { display: none; }
 
       #mobile-sub-list a {
         font-size: 0.65rem;
@@ -235,8 +237,8 @@
     }
 
     @media (max-width: 768px) {
-      #stage { top: 56px; bottom: 0; }
-      .photo { max-width: 92vw; max-height: calc(100vh - 56px - 40px); }
+      #stage { top: 90px; bottom: 0; }
+      .photo { max-width: 92vw; max-height: calc(100vh - 90px - 40px); }
     }
 
     @media (max-width: 768px) {
@@ -1092,16 +1094,19 @@
               closeGridView();
             } else {
               mobileSubBar.dataset.cat = cat;
+
+              const subs = subDataMap[cat] || [];
               mobileSubBar.classList.add('open');
-              mobileSubList.innerHTML = (subDataMap[cat] || []).map(s => `<li><a href="#">${s}</a></li>`).join('');
+              mobileSubList.innerHTML = subs.map(s => `<li><a href="#">${s}</a></li>`).join('');
               bindSubLinks(mobileSubList);
+
               navListEl.prepend(item);
               const navRect = document.getElementById('main-nav').getBoundingClientRect();
               mobileSubBar.style.top  = navRect.bottom + 1 + 'px';
               mobileSubBar.style.left = navRect.left + 'px';
               // 첫 번째 서브카테고리 type에 따라 자동 오픈
-              if (subDataMap[cat] && subDataMap[cat].length) {
-                const firstName = subDataMap[cat][0];
+              if (subs.length) {
+                const firstName = subs[0];
                 const firstInfo = subInfoMap[firstName] || {};
                 const firstLink = mobileSubList.querySelector('a');
                 if (firstInfo.type === 'grid') {
