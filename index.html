@@ -307,9 +307,58 @@
       color: #aaa;
     }
 
+    #grid-mobile-gallery { display: none; }
+
     @media (max-width: 768px) {
-      #grid-view { padding: 80px 20px 40px; }
-      .grid-container { grid-template-columns: repeat(2, 1fr); gap: 20px 14px; }
+      /* 모바일: PC 그리드 숨기고 가로 스크롤 포스터 */
+      #grid-view { padding: 0; overflow: hidden; }
+      .grid-container { display: none; }
+
+      #grid-view.open #grid-mobile-gallery {
+        display: flex;
+        flex-direction: row;
+        position: absolute;
+        inset: 0;
+        padding: 0 20px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .grid-poster {
+        flex: 0 0 auto;
+        height: 50vh;
+        scroll-snap-align: center;
+        position: relative;
+        cursor: pointer;
+        overflow: hidden;
+      }
+
+      .grid-poster img {
+        height: 100%;
+        width: auto;
+        object-fit: contain;
+        transition: opacity 0.15s;
+      }
+
+      .grid-poster:active img { opacity: 0.8; }
+
+      .grid-poster-name {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        color: #fff;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      }
+    }
+
+    @media (min-width: 769px) {
+      #grid-mobile-gallery { display: none !important; }
     }
 
     /* ── PROJECT DETAIL VIEW (Interior 프로젝트 가로 스크롤) ── */
@@ -526,6 +575,7 @@
   <div id="counter"></div>
   <div id="grid-view">
     <div class="grid-container" id="grid-container"></div>
+    <div id="grid-mobile-gallery"></div>
   </div>
 
   <div id="split-view">
@@ -853,34 +903,62 @@
       }
 
       // ── 그리드 뷰 ──
+      const gridMobileGallery = document.getElementById('grid-mobile-gallery');
+
       function openGridView(catId) {
         const sub = gridDataMap[catId];
         if (!sub) return;
         gridViewMode = true;
         const projects = sub.projects || [];
-        gridContainer.innerHTML = projects.length === 0
-          ? `<div class="grid-empty">아직 등록된 프로젝트가 없습니다.</div>`
-          : projects.map(p => `
-              <div class="grid-item">
-                <div class="grid-item-thumb">
-                  ${p.coverPhoto ? `<img src="${optimizeImg(p.coverPhoto, { thumb: true })}" alt="${p.name}" loading="lazy">` : ''}
-                </div>
-                <div class="grid-item-name">${p.name}</div>
+
+        if (isMobile()) {
+          // 모바일: 가로 스크롤 포스터 (웨딩과 동일)
+          gridMobileGallery.innerHTML = projects.length === 0
+            ? ''
+            : projects.map((p, i) => `
+              <div class="grid-poster" data-project-idx="${i}">
+                <img src="${optimizeImg(p.coverPhoto)}" alt="${p.name}" loading="lazy">
+                <div class="grid-poster-name">${p.name}</div>
               </div>`).join('');
+
+          gridMobileGallery.querySelectorAll('.grid-poster').forEach(poster => {
+            poster.addEventListener('click', () => {
+              const idx = parseInt(poster.dataset.projectIdx);
+              projectDetail.classList.add('zoom-enter');
+              openProjectDetail(projects[idx]);
+              projectDetail.addEventListener('animationend', () => {
+                projectDetail.classList.remove('zoom-enter');
+              }, { once: true });
+            });
+          });
+
+        } else {
+          // PC: 기존 그리드 뷰
+          gridContainer.innerHTML = projects.length === 0
+            ? `<div class="grid-empty">아직 등록된 프로젝트가 없습니다.</div>`
+            : projects.map(p => `
+                <div class="grid-item">
+                  <div class="grid-item-thumb">
+                    ${p.coverPhoto ? `<img src="${optimizeImg(p.coverPhoto, { thumb: true })}" alt="${p.name}" loading="lazy">` : ''}
+                  </div>
+                  <div class="grid-item-name">${p.name}</div>
+                </div>`).join('');
+
+          gridContainer.querySelectorAll('.grid-item').forEach((item, i) => {
+            item.addEventListener('click', () => {
+              if (projects[i]) openProjectDetail(projects[i]);
+            });
+          });
+        }
+
         gridView.classList.add('open');
         counter.style.display = 'none';
-
-        // 그리드 아이템 클릭 → 프로젝트 상세 뷰
-        gridContainer.querySelectorAll('.grid-item').forEach((item, i) => {
-          item.addEventListener('click', () => {
-            if (projects[i]) openProjectDetail(projects[i]);
-          });
-        });
       }
 
       function closeGridView() {
         gridViewMode = false;
         gridView.classList.remove('open');
+        gridMobileGallery.innerHTML = '';
         counter.style.display = '';
       }
 
