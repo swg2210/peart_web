@@ -234,21 +234,45 @@
       cursor: pointer;
     }
 
-    /* ── COUNTER ── */
-    #counter {
+    /* ── COUNTER & GET POSTER ── */
+    #bottom-bar {
       position: fixed;
       bottom: 28px;
       right: 36px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      z-index: 100;
+    }
+
+    #counter {
       font-size: 0.6rem;
       letter-spacing: 0.3em;
       opacity: 0.3;
-      z-index: 100;
+    }
+
+    #get-poster {
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      background: #111;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      opacity: 0.6;
+    }
+
+    #get-poster:hover { opacity: 1; }
+
+    @media (max-width: 768px) {
+      #get-poster:active { opacity: 1; }
     }
 
     @media (max-width: 768px) {
       #stage { top: 90px; bottom: 36px; }
       .photo { max-width: 92vw; max-height: calc(100vh - 90px - 56px); }
-      #counter { bottom: 12px; right: 20px; }
+      #bottom-bar { bottom: 12px; right: 20px; }
     }
 
     @media (max-width: 768px) {
@@ -567,6 +591,144 @@
     @media (min-width: 769px) {
       #split-mobile-gallery { display: none !important; }
     }
+    /* ── POSTER INQUIRY MODAL ── */
+    #poster-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 90;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #poster-modal.open {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 90px;
+    }
+
+    @media (max-width: 768px) {
+      #poster-modal.open { padding-top: 80px; }
+    }
+
+
+    .poster-inner {
+      width: 100%;
+      max-width: 400px;
+      padding: 40px 24px 80px;
+      margin-top: 20px;
+      background: #f3f3f3;
+      border-radius: 8px;
+    }
+
+    .poster-inner h2 {
+      font-family: 'EB Garamond', serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+      margin-bottom: 20px;
+      color: #111;
+    }
+
+    .poster-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+    }
+
+    .poster-desc {
+      font-size: 0.65rem;
+      color: #999;
+      margin-top: 10px;
+      margin-bottom: 16px;
+    }
+
+    .poster-form label {
+      display: block;
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      color: #999;
+      margin-bottom: 2px;
+      margin-top: 10px;
+    }
+
+    .poster-form label:first-child { margin-top: 0; }
+
+    .poster-form input,
+    .poster-form textarea,
+    .poster-form select {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid #ddd;
+      padding: 6px 0;
+      font-size: 0.8rem;
+      font-family: inherit;
+      font-weight: 300;
+      color: #111;
+      background: transparent;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .poster-form input:focus,
+    .poster-form textarea:focus,
+    .poster-form select:focus {
+      border-bottom-color: #111;
+    }
+
+    .poster-form textarea {
+      resize: none;
+      height: 48px;
+    }
+
+    .poster-form select {
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+
+    .poster-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 24px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom));
+      background: #fff;
+      z-index: 91;
+    }
+
+    .poster-submit {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      display: block;
+      padding: 14px;
+      background: #111;
+      color: #fff;
+      border: none;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.2s;
+    }
+
+    .poster-submit:hover { opacity: 0.8; }
+    .poster-submit:disabled { opacity: 0.3; cursor: default; }
+
+    #poster-status {
+      margin-top: 8px;
+      font-size: 0.7rem;
+      text-align: center;
+      color: #999;
+    }
+
+    @media (max-width: 768px) {
+      #poster-modal-close { top: 20px; right: 20px; }
+      .poster-form { max-width: 100%; }
+      .poster-preview { max-height: 150px; }
+    }
   </style>
 </head>
 <body>
@@ -588,7 +750,10 @@
   <div id="stage"></div>
   <div id="gallery-overlay"></div>
   <div id="gallery-title"></div>
-  <div id="counter"></div>
+  <div id="bottom-bar">
+    <div id="counter"></div>
+    <div id="get-poster">Get Poster</div>
+  </div>
   <div id="grid-view">
     <div class="grid-container" id="grid-container"></div>
     <div id="grid-mobile-gallery"></div>
@@ -607,6 +772,32 @@
   <div id="project-detail">
     <div class="project-scroll" id="project-scroll"></div>
     <div id="project-detail-info"></div>
+  </div>
+
+  <div id="poster-modal">
+    <div class="poster-inner">
+      <h2>Get Poster</h2>
+      <img id="poster-preview-img" class="poster-preview" src="" alt="">
+      <p class="poster-desc">* 해당 사진을 포스터로 제작하여 배송해드립니다.</p>
+      <div class="poster-form">
+        <label>NAME *</label>
+        <input type="text" id="poster-name" placeholder="" autocomplete="name" required>
+        <label>CONTACT (Email or Phone) *</label>
+        <input type="text" id="poster-contact" placeholder="" autocomplete="email" required>
+        <label>SIZE *</label>
+        <select id="poster-size">
+          <option value="A4">A4 — ₩30,000</option>
+          <option value="A3">A3 — ₩50,000</option>
+          <option value="A2">A2 — ₩80,000</option>
+        </select>
+        <label>REQUEST</label>
+        <textarea id="poster-request" placeholder=""></textarea>
+      </div>
+    </div>
+    <div class="poster-bottom">
+      <button class="poster-submit" id="poster-submit">Submit</button>
+      <div id="poster-status"></div>
+    </div>
   </div>
 
   <script>
@@ -644,6 +835,8 @@
 
       const stage   = document.getElementById('stage');
       const counter = document.getElementById('counter');
+      const bottomBar = document.getElementById('bottom-bar');
+      const getPosterBtn = document.getElementById('get-poster');
 
       const PRELOAD_RANGE = 8;
       const loadedSet = new Set();
@@ -693,6 +886,13 @@
       let catCurrent = 0;
 
       counter.textContent = `01 / ${String(N).padStart(2, '0')}`;
+      bottomBar.style.display = 'none';
+      setTimeout(() => {
+        bottomBar.style.display = '';
+        bottomBar.style.opacity = '0';
+        bottomBar.style.transition = 'opacity 0.5s ease';
+        requestAnimationFrame(() => { bottomBar.style.opacity = '1'; });
+      }, 800);
 
       // ── 카테고리 데이터 맵 ──
       const subDataMap   = {};  // catId -> [subName, ...]
@@ -787,6 +987,8 @@
         catCurrent = 0;
         photos[catPhotoIndices[0]].classList.add('active');
         counter.textContent = `01 / ${String(catPhotoIndices.length).padStart(2, '0')}`;
+        bottomBar.style.transition = 'opacity 0.5s ease';
+        requestAnimationFrame(() => { bottomBar.style.opacity = '1'; });
       }
 
       function exitPhotoMode() {
@@ -862,7 +1064,7 @@
           });
 
           splitView.classList.add('open');
-          counter.style.display = 'none';
+          bottomBar.style.display = 'none';
 
         } else {
           // PC: 기존 split 뷰 (allPhotos 사용)
@@ -907,7 +1109,7 @@
           });
 
           splitView.classList.add('open');
-          counter.style.display = 'none';
+          bottomBar.style.display = 'none';
         }
       }
 
@@ -915,7 +1117,7 @@
         splitViewMode = false;
         splitView.classList.remove('open');
         splitMobileGallery.innerHTML = '';
-        counter.style.display = '';
+        bottomBar.style.display = '';
       }
 
       // ── 그리드 뷰 ──
@@ -968,14 +1170,14 @@
         }
 
         gridView.classList.add('open');
-        counter.style.display = 'none';
+        bottomBar.style.display = 'none';
       }
 
       function closeGridView() {
         gridViewMode = false;
         gridView.classList.remove('open');
         gridMobileGallery.innerHTML = '';
-        counter.style.display = '';
+        bottomBar.style.display = '';
       }
 
       let projectPhotoCount = 0;
@@ -992,7 +1194,7 @@
         projectDetail.classList.add('open');
         history.pushState({ view: 'projectDetail' }, '');
         // 기존 counter UI 활용
-        counter.style.display = '';
+        bottomBar.style.display = '';
         counter.textContent = `01 / ${String(projectPhotoCount).padStart(2, '0')}`;
 
         // 스크롤 위치에 따라 counter 업데이트
@@ -1020,7 +1222,7 @@
         projectDetailMode = false;
         projectDetail.classList.remove('open');
         projectScroll.innerHTML = '';
-        counter.style.display = 'none';
+        bottomBar.style.display = 'none';
         if (projectScroll._scrollHandler) {
           projectScroll.removeEventListener('scroll', projectScroll._scrollHandler);
           projectScroll._scrollHandler = null;
@@ -1032,6 +1234,7 @@
         galleryMode = true;
         catPhotoMode = false;
         stage.classList.add('gallery');
+        bottomBar.style.opacity = '0';
         clearTimeout(galleryTimer);
         galleryTimer = setTimeout(() => {
           if (galleryMode) {
@@ -1095,6 +1298,10 @@
           const isGridCat = !!gridDataMap[cat];
 
           // 열려있는 뷰 모두 닫기
+          if (posterModal.classList.contains('open')) {
+            closePosterModal();
+            if (history.state && history.state.view === 'poster') history.back();
+          }
           const wasInDetail = projectDetailMode;
           if (projectDetailMode) {
             closeProjectDetail();
@@ -1231,13 +1438,19 @@
 
       // 브라우저 뒤로가기 → 프로젝트 상세에서 그리드로 복귀
       window.addEventListener('popstate', (e) => {
-        if (projectDetailMode) {
+        if (posterModal.classList.contains('open')) {
+          closePosterModal();
+        } else if (projectDetailMode) {
           closeProjectDetail();
         }
       });
 
       // jinho.kim 로고 클릭 → 메인으로 복귀
       document.querySelector('.header-brand').addEventListener('click', () => {
+        if (posterModal.classList.contains('open')) {
+          closePosterModal();
+          if (history.state && history.state.view === 'poster') history.back();
+        }
         if (projectDetailMode) closeProjectDetail();
         closeGridView();
         closeSplitView();
@@ -1246,6 +1459,89 @@
         navItems.forEach(i => i.classList.remove('open'));
         mobileSubBar.classList.remove('open');
       });
+      // ── Get Poster 모달 ──
+      const posterModal = document.getElementById('poster-modal');
+      const posterPreviewImg = document.getElementById('poster-preview-img');
+      const posterSubmitBtn = document.getElementById('poster-submit');
+      const posterStatus = document.getElementById('poster-status');
+      let posterPhotoSrc = '';
+
+      const headerRight = document.querySelector('.header-right');
+      const headerRightHref = headerRight.href;
+      const headerRightText = headerRight.innerHTML;
+
+      function openPosterModal() {
+        const activePhoto = document.querySelector('.photo.active');
+        if (activePhoto) {
+          posterPhotoSrc = activePhoto.dataset.originalSrc || activePhoto.src;
+          posterPreviewImg.src = optimizeImg(posterPhotoSrc, { w: 600 });
+        }
+        posterModal.classList.add('open');
+        bottomBar.style.display = 'none';
+        // Contact → X 전환
+        headerRight.href = '#';
+        headerRight.innerHTML = '✕';
+        headerRight.style.textDecoration = 'none';
+        headerRight.onclick = (e) => { e.preventDefault(); closePosterModal(); if (history.state && history.state.view === 'poster') history.back(); };
+        history.pushState({ view: 'poster' }, '');
+      }
+
+      function closePosterModal() {
+        posterModal.classList.remove('open');
+        bottomBar.style.display = '';
+        posterStatus.textContent = '';
+        // X → Contact 복원
+        headerRight.href = headerRightHref;
+        headerRight.innerHTML = headerRightText;
+        headerRight.style.textDecoration = '';
+        headerRight.onclick = null;
+      }
+
+      getPosterBtn.addEventListener('click', openPosterModal);
+
+
+      posterSubmitBtn.addEventListener('click', async () => {
+        const name = document.getElementById('poster-name').value.trim();
+        const contact = document.getElementById('poster-contact').value.trim();
+        const size = document.getElementById('poster-size').value;
+        const request = document.getElementById('poster-request').value.trim();
+
+        if (!name || !contact) {
+          posterStatus.textContent = 'Please fill in name and contact.';
+          return;
+        }
+
+        posterSubmitBtn.disabled = true;
+        posterSubmitBtn.textContent = 'Sending...';
+        posterStatus.textContent = '';
+
+        try {
+          const res = await fetch('/api/poster-inquiry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, contact, size, request, photoSrc: posterPhotoSrc })
+          });
+          const result = await res.json();
+
+          if (res.ok && result.success) {
+            posterStatus.style.color = '#4caf7d';
+            posterStatus.textContent = 'Thank you! We will contact you soon.';
+            document.getElementById('poster-name').value = '';
+            document.getElementById('poster-contact').value = '';
+            document.getElementById('poster-request').value = '';
+          } else {
+            posterStatus.style.color = '#e05555';
+            posterStatus.textContent = result.error || 'Something went wrong.';
+          }
+        } catch (e) {
+          posterStatus.style.color = '#e05555';
+          posterStatus.textContent = 'Network error. Please try again.';
+        }
+
+        posterSubmitBtn.disabled = false;
+        posterSubmitBtn.textContent = 'Submit';
+      });
+
     })();
   </script>
 </body>
