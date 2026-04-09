@@ -17,8 +17,9 @@ index.html       # 메인 사이트 (모든 뷰 포함)
 index-white.html # 화이트 버전
 admin.html       # 관리자 패널 (data.json CRUD)
 data.json        # 카테고리/사진 데이터
-api/config.js    # Cloudinary 설정
-api/save-data.js # 데이터 저장 API
+api/config.js         # Cloudinary 설정
+api/save-data.js      # 데이터 저장 API
+api/poster-inquiry.js # 포스터 문의 이메일 발송 (Resend API)
 images/          # 로컬 이미지 파일들 (테스트용, 8~16MB 원본)
 film/            # 영상 파일 (로컬 테스트용, .gitignore 권장)
 CLAUDE.md        # 이 파일
@@ -36,7 +37,7 @@ CLAUDE.md        # 이 파일
 - `subInfoMap`: subName → { title, subtitle, type }
 - `catPhotosMap`: subName → [photoSrc, ...]
 - `gridDataMap`: catId → sub (type=grid인 서브카테고리)
-- `splitDataMap`: subName → [photoSrc, ...] (type=split)
+- `splitDataMap`: subName → { projects: [...], allPhotos: [...] } (type=split)
 
 ### 이미지 최적화 시스템
 - `optimizeImg(src, opts)`: Cloudinary URL에 변환 파라미터 자동 삽입
@@ -74,7 +75,7 @@ CLAUDE.md        # 이 파일
 - grid 타입 (Interior): `renderGridSubEditor` — Nav 이름 편집 + 프로젝트 추가/삭제, 프로젝트별 사진 관리
 - split 타입 (Wedding): `renderSplitSubEditor` — Nav 이름 편집 + 사진 업로드/삭제, 첫 사진이 대표사진
 
-## Current State (2026-04-09)
+## Current State (2026-04-09, 2차 업데이트)
 
 ### Commercial 카테고리
 - **Wedding** (type: split):
@@ -106,8 +107,30 @@ CLAUDE.md        # 이 파일
 - split 타입 (Wedding): `renderSplitSubEditor` — Nav 이름 편집 + 사진 업로드/삭제 (아직 projects 구조 미반영, 기존 photos 배열 UI)
 - **메인 사진 관리**: 사이드바 최상단 "메인 사진" 항목 — allPhotos 업로드/삭제/순서변경
 
+### Get Poster 문의 기능 (2026-04-09 추가)
+- `#bottom-bar`: 카운터 + Get Poster 버튼을 하나로 묶은 하단 고정 바
+- **Get Poster 버튼**: PC — 검정 배경 라운드 필 버튼 / 모바일 — 동일 스타일
+- **문의 폼 모달** (`#poster-modal`):
+  - z-index 90 (헤더 100 아래) → 헤더/카테고리 항상 위에 표시
+  - 모달 열리면 헤더 우측 Contact → ✕ 전환, 닫으면 복원
+  - `history.pushState({ view: 'poster' })` → 뒤로가기 시 모달만 닫힘
+  - 자동 채워지는 정보: 현재 사진 썸네일 (originalSrc → optimizeImg w:600)
+  - 입력 필드: 이름*, 연락처*, 사이즈*(A4/A3/A2 + 가격), 요청사항
+  - Submit → `api/poster-inquiry.js` POST 호출
+  - UI: 흰색 배경 모달 + 회색(`#f3f3f3`) 주문서 박스 + 하단 플로팅 Submit
+- **api/poster-inquiry.js**: Resend REST API로 이메일 발송 (환경변수: `RESEND_API_KEY`, `NOTIFY_EMAIL`)
+- **bottom-bar 페이드인**: 초기 로드 시 0.8초 후 페이드인, enterGallery에서 숨김 → enterPhotoMode에서 페이드인
+
+### 켄 번즈 효과
+- `.photo.active`에 `animation: kenburns 4s ease-in-out forwards` (scale 1 → 1.02)
+- PC/모바일 공통 적용
+- `transition: opacity 0.4s ease`로 사진 전환도 부드럽게
+
 ## Pending Work
+- [ ] **Resend 설정** — Vercel 대시보드에 `RESEND_API_KEY`, `NOTIFY_EMAIL` 환경변수 등록 (resend.com 가입 → API 키 발급)
 - [ ] **admin.html 웨딩 프로젝트 관리 UI** — data.json이 projects 구조로 바뀌었으나 어드민은 아직 기존 photos 배열 UI. renderSplitSubEditor를 renderGridSubEditor처럼 프로젝트 단위 관리로 변경 필요
+- [ ] **포스터 가격 확정** — 현재 임시 가격 (A4 ₩30,000 / A3 ₩50,000 / A2 ₩80,000), 작가님 확정 후 수정
+- [ ] **포스터 문의 어드민 확인** — 이메일 외 어드민에서 문의 내역 리스트 확인 기능 (선택)
 - [ ] **사진 캡션 기능** — allPhotos를 객체 배열({src, title, desc})로 변환, 하단 제목/설명 표시 (작업 시작했으나 원복됨)
 - [ ] **Film 뷰** — type "film" 영화관 스타일 영상 뷰. Cloudinary 유료 전환 필요 (255MB 영상, 무료 100MB 제한)
 - [ ] Film 어드민 관리 UI 구현
@@ -149,3 +172,8 @@ CLAUDE.md        # 이 파일
 13. **모바일 카테고리 전환**: 상세 뷰에서 카테고리 클릭 시 `wasInDetail` 플래그로 토글 닫힘 방지해야 함. 안 그러면 같은 카테고리 클릭 시 닫히기만 함
 14. **모바일 split/grid 뷰 구조**: PC와 모바일이 완전히 다른 UI. `isMobile()` 분기로 PC는 기존 뷰, 모바일은 가로 스크롤 포스터 사용. HTML에 `#split-mobile-gallery`, `#grid-mobile-gallery` 별도 컨테이너
 15. **스크롤바 숨김**: iOS Safari에서 가로 스크롤 시 스크롤바 보임 → `scrollbar-width: none` + `::-webkit-scrollbar { display: none }` 둘 다 필요
+16. **모달 z-index와 헤더**: 모달을 헤더 위(z-index 500)에 두면 네비게이션 불가. 헤더(100) 아래(90)에 두고 헤더 우측만 Contact↔✕ 전환하는 게 자연스러움
+17. **history.pushState 중첩**: poster 모달 + projectDetail 등 여러 뷰가 pushState를 쓸 때, popstate에서 현재 어떤 뷰가 열려있는지 순서대로 체크해야 함 (poster → projectDetail 순)
+18. **bottom-bar 페이드인**: 사진 로드 전에 카운터가 보이면 어색함. 초기엔 display:none + setTimeout 후 opacity 페이드인. 카테고리 전환 시에도 enterGallery에서 숨기고 enterPhotoMode에서 페이드인
+19. **Vercel serverless에서 npm 없이 외부 API 호출**: package.json 없이도 fetch()로 REST API 호출 가능 (Resend, SendGrid 등). npm 패키지 불필요
+20. **켄 번즈 효과 강도**: scale 1.08은 너무 과함, 1.02가 "의식적으로 인지 못하지만 살아있는 느낌". 시간도 10~15초는 길고 4초가 적당
