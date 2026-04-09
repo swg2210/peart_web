@@ -74,45 +74,49 @@ CLAUDE.md        # 이 파일
 - grid 타입 (Interior): `renderGridSubEditor` — Nav 이름 편집 + 프로젝트 추가/삭제, 프로젝트별 사진 관리
 - split 타입 (Wedding): `renderSplitSubEditor` — Nav 이름 편집 + 사진 업로드/삭제, 첫 사진이 대표사진
 
-## Current State (2026-04-08)
+## Current State (2026-04-09)
 
 ### Commercial 카테고리
-- **Wedding** (type: split): 대표사진 + CSS columns masonry, 썸네일 클릭 시 대표사진 교체
-- **Interior** (type: grid): 3열 프로젝트 그리드, 프로젝트 클릭 시 가로 스크롤 상세 뷰
+- **Wedding** (type: split):
+  - PC: 대표사진 + CSS columns masonry (기존 유지)
+  - 모바일: 가로 스크롤 포스터 → 클릭 시 가로 스크롤 상세 (줌인 트랜지션)
+  - data.json: `projects` 배열 구조 (`{ name, coverPhoto, photos }`)
+  - PC split 뷰는 projects의 allPhotos를 합쳐서 표시
+- **Interior** (type: grid):
+  - PC: 3열 프로젝트 그리드 → 프로젝트 클릭 시 가로 스크롤 상세 뷰
+  - 모바일: 웨딩과 동일한 가로 스크롤 포스터 → 클릭 시 가로 스크롤 상세
 
 ### Personal 카테고리
 - Seoul KR, ISLAND, Copenhagen DK, Malmö SE, Berlin DE, Berlin Bauhaus
 - 어드민에서 실제 사진 등록 완료 (Cloudinary URL)
 
+### 모바일 최적화 (2026-04-09 적용 완료)
+- stage `top: 90px, bottom: 36px`로 헤더/카테고리/카운터 영역 확보
+- `.photo` max-height: `calc(100vh - 90px - 56px)`
+- `overscroll-behavior: none` + viewport `maximum-scale=1` (iOS 바운스 방지)
+- `#mobile-sub-bar` z-index 300, top 동적 위치
+- 모든 스크롤 영역 스크롤바 숨김 (`scrollbar-width: none` + `::-webkit-scrollbar`)
+- 카운터 모바일 위치 조정 (`bottom: 12px, right: 20px`)
+- 카테고리 전환 시 모든 뷰(split/grid/projectDetail) 닫기
+- 상세 뷰에서 같은 카테고리 클릭해도 다시 열리도록 토글 로직 수정
+
+### Admin Panel
+- 기본 타입 (Personal 등): 사진 업로드/삭제/순서변경 + 타이틀/서브타이틀 편집
+- grid 타입 (Interior): `renderGridSubEditor` — Nav 이름 편집 + 프로젝트 추가/삭제, 프로젝트별 사진 관리
+- split 타입 (Wedding): `renderSplitSubEditor` — Nav 이름 편집 + 사진 업로드/삭제 (아직 projects 구조 미반영, 기존 photos 배열 UI)
+- **메인 사진 관리**: 사이드바 최상단 "메인 사진" 항목 — allPhotos 업로드/삭제/순서변경
+
 ## Pending Work
-- [ ] **모바일 전면 개편** — 아래 "모바일 개선 분석" 참고
+- [ ] **admin.html 웨딩 프로젝트 관리 UI** — data.json이 projects 구조로 바뀌었으나 어드민은 아직 기존 photos 배열 UI. renderSplitSubEditor를 renderGridSubEditor처럼 프로젝트 단위 관리로 변경 필요
 - [ ] **사진 캡션 기능** — allPhotos를 객체 배열({src, title, desc})로 변환, 하단 제목/설명 표시 (작업 시작했으나 원복됨)
-- [ ] **Film 뷰** — type "film" 영화관 스타일 영상 뷰 MVP 작업 시작했으나 원복됨. Cloudinary 유료 전환 필요 (255MB 영상, 무료 100MB 제한)
+- [ ] **Film 뷰** — type "film" 영화관 스타일 영상 뷰. Cloudinary 유료 전환 필요 (255MB 영상, 무료 100MB 제한)
 - [ ] Film 어드민 관리 UI 구현
-- [ ] 렌더링 속도 추가 개선 (아직 느린 편)
-
-## 모바일 개선 분석 (2026-04-08 분석 완료, 미적용)
-
-### Critical
-1. **사진이 헤더/카테고리 영역 침범** — `.photo`가 `position: absolute`라 stage padding이 안 먹힘. stage의 `inset`(top/bottom)을 조정하거나 다른 접근 필요
-2. **Photo Caption** — 모바일 스타일 아예 없음. 위치/크기/가독성 + safe area 대응 필요
-3. **Split View (Wedding)** — CSS columns인데 media query에서 grid-template-columns 사용 중 (적용 안 됨). `columns: 2` → `columns: 1` 로 수정 필요
-4. **Film View** — 버튼 터치 타겟 너무 작음, 영상 크기 미조정, 하단 UI 겹침
-5. **Safe Area** — 아이폰 노치/홈 인디케이터 전혀 고려 안 됨 (`env(safe-area-inset-*)` 미사용)
-6. **터치 타겟** — 네비/버튼 등 44px 미달
-
-### Moderate
-7. Counter 위치 — 하단/우측 여백 모바일에서 과도
-8. Gallery 타이틀 — 600px 이하 추가 축소 필요
-9. Grid View (Interior) — 상단 패딩 80px 과도
-10. Project Detail — 가로 스크롤 높이 모바일 최적화 필요
-11. 가로/세로 방향(Landscape) — 전혀 미대응
-12. hover → active — 모바일에서 hover 없음, :active 상태 필요
-
-### 모바일 작업 시 주의사항
-- `.photo`는 `position: absolute` → 부모 padding 무시됨. stage의 `top`/`bottom`을 직접 조정해야 함
-- CSS `display: none` → transition 불가. fade 효과가 필요하면 `opacity` + `pointer-events`로 처리
-- 모바일 미디어쿼리를 한 곳에 통합 관리할 것 (기존에 여러 곳에 산재)
+- [ ] **Safe Area** — 아이폰 노치/홈 인디케이터 대응 (`env(safe-area-inset-*)`)
+- [ ] **터치 타겟** — 네비/버튼 등 44px 미달
+- [ ] Gallery 타이틀 — 600px 이하 추가 축소
+- [ ] Landscape 대응
+- [ ] hover → active 전환
+- [ ] 렌더링 속도 추가 개선
 
 ## Design Reference
 - yosigo.es/commercial/ : Interior 그리드 레이아웃 참고
@@ -140,3 +144,8 @@ CLAUDE.md        # 이 파일
 8. **CSS display:none → transition 불가**: fade 효과 필요 시 opacity + pointer-events로 처리
 9. **뷰 전환 시 다른 뷰 닫기**: 새 뷰 열 때 반드시 다른 모든 뷰 닫아야 함
 10. **position: absolute 자식은 부모 padding 무시**: stage에 padding 줘도 .photo에 안 먹힘 → stage의 inset(top/bottom)을 직접 조정해야 함
+11. **iOS 좌우 바운스**: `overscroll-behavior: none` + viewport `maximum-scale=1, user-scalable=no`로 방지
+12. **const 중복 선언**: JS에서 같은 스코프에 `const` 변수를 두 번 선언하면 전체 스크립트가 죽음 (isMobile 중복 사례)
+13. **모바일 카테고리 전환**: 상세 뷰에서 카테고리 클릭 시 `wasInDetail` 플래그로 토글 닫힘 방지해야 함. 안 그러면 같은 카테고리 클릭 시 닫히기만 함
+14. **모바일 split/grid 뷰 구조**: PC와 모바일이 완전히 다른 UI. `isMobile()` 분기로 PC는 기존 뷰, 모바일은 가로 스크롤 포스터 사용. HTML에 `#split-mobile-gallery`, `#grid-mobile-gallery` 별도 컨테이너
+15. **스크롤바 숨김**: iOS Safari에서 가로 스크롤 시 스크롤바 보임 → `scrollbar-width: none` + `::-webkit-scrollbar { display: none }` 둘 다 필요
