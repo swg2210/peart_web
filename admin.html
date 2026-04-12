@@ -993,14 +993,16 @@ function renderSubEditor(catId, subId) {
 // SPLIT SUB EDITOR (Wedding 전용)
 // ────────────────────────────────────────────
 function renderSplitSubEditor(el, cat, sub, catId, subId) {
-  if (!sub.photos) sub.photos = [];
+  if (!sub.projects) sub.projects = [];
+  const projects = sub.projects;
 
   el.innerHTML = `
     <div class="section-header">
       <div>
         <h2>${sub.name} <span style="font-size:0.7rem;color:var(--text-dim);font-weight:300">스플릿 뷰</span></h2>
-        <div class="breadcrumb">${cat.label} → 사진 관리</div>
+        <div class="breadcrumb">${cat.label} → 프로젝트 목록</div>
       </div>
+      <button class="btn btn-sm btn-primary" onclick="openAddProjectModal('${catId}','${subId}')">+ 프로젝트 추가</button>
     </div>
 
     <div class="form-group">
@@ -1011,28 +1013,10 @@ function renderSplitSubEditor(el, cat, sub, catId, subId) {
 
     <div class="divider"></div>
 
-    <div class="photos-section">
-      <h3>사진 (${sub.photos.length}장) <span style="font-size:0.65rem;color:var(--text-dim)">— 첫 번째 사진이 대표사진으로 사용됩니다</span></h3>
-
-      <div class="upload-area" id="upload-area-${subId}"
-           onclick="document.getElementById('file-input-${subId}').click()"
-           ondragover="onDragOverUpload(event)"
-           ondragleave="onDragLeaveUpload(event,'upload-area-${subId}')"
-           ondrop="onDropUpload(event,'${catId}','${subId}')">
-        <div class="upload-icon">+</div>
-        <p>클릭하거나 드래그해서 사진 업로드</p>
-        <p style="font-size:0.68rem;margin-top:4px">JPG, PNG, WEBP 지원</p>
-        <input type="file" id="file-input-${subId}" multiple accept="image/*"
-          onchange="onFileSelect(event,'${catId}','${subId}')">
-      </div>
-
-      <div id="upload-progress-${subId}" class="upload-progress" style="display:none"></div>
-
-      <div class="photos-grid" id="photos-grid-${catId}-${subId}">
-        ${sub.photos.map((src, i) => photoCardHTML(src, i, catId, subId)).join('')}
-      </div>
-
-      ${sub.photos.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">아직 사진이 없습니다.</p>` : ''}
+    <div id="projects-list">
+      ${projects.length === 0
+        ? `<p style="font-size:0.78rem;color:var(--text-dim);padding:20px 0">아직 등록된 프로젝트가 없습니다.</p>`
+        : projects.map((p, pi) => projectRowHTML(p, pi, catId, subId)).join('')}
     </div>`;
 }
 
@@ -1136,7 +1120,14 @@ function removeProjectPhoto(pi, si, catId, subId) {
   if (!sub || !sub.projects || !sub.projects[pi]) return;
   sub.projects[pi].photos.splice(si, 1);
   sub.projects[pi].coverPhoto = sub.projects[pi].photos[0] || '';
-  selectSub(catId, subId);
+  // 전체 리렌더 대신 해당 프로젝트의 사진 그리드만 업데이트
+  const expandEl = document.getElementById(`project-expand-${pi}`);
+  if (expandEl) {
+    const grid = expandEl.querySelector('.photos-grid');
+    const h3 = expandEl.querySelector('h3');
+    if (grid) grid.innerHTML = sub.projects[pi].photos.map((src, si2) => projectPhotoCardHTML(src, si2, pi, catId, subId)).join('');
+    if (h3) h3.innerHTML = `사진 (${sub.projects[pi].photos.length}장) <span style="font-size:0.65rem;color:var(--text-dim)">— 첫 번째 사진이 커버로 사용됩니다</span>`;
+  }
 }
 
 function onDropUploadProject(e, catId, subId, pi) {
