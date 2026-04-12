@@ -783,6 +783,21 @@
         }
       ],
       "visible": false
+    },
+    {
+      "id": "about",
+      "label": "About",
+      "visible": false,
+      "subcategories": [
+        {
+          "id": "about-main",
+          "name": "About",
+          "type": "about",
+          "title": "About",
+          "subtitle": "",
+          "photos": []
+        }
+      ]
     }
   ]
 }

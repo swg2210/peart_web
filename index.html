@@ -11,6 +11,18 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* ── 캡처 방지 ── */
+    img {
+      -webkit-user-drag: none;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    body {
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
     html, body {
       width: 100%; height: 100%;
       overflow: hidden;
@@ -724,6 +736,100 @@
       color: #999;
     }
 
+    /* ── ABOUT OVERLAY ── */
+    #about-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: #fff;
+      display: none;
+      flex-direction: column;
+    }
+
+    #about-overlay.open { display: flex; }
+
+    #about-shutter {
+      position: fixed;
+      inset: 0;
+      z-index: 201;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    #about-shutter.active { visibility: visible; }
+
+    #about-shutter-text {
+      font-weight: 700;
+      font-size: 2.4rem;
+      letter-spacing: -0.02em;
+      color: #111;
+    }
+
+    /* 셔터 블레이드 (상하에서 닫히는 검정 커튼) */
+    #about-shutter-top,
+    #about-shutter-bottom {
+      position: fixed;
+      left: 0; right: 0;
+      height: 50vh;
+      background: #111;
+      z-index: 202;
+      visibility: hidden;
+      transition: transform 0.3s cubic-bezier(0.7, 0, 0.3, 1);
+    }
+
+    #about-shutter-top {
+      top: 0;
+      transform: translateY(-100%);
+    }
+
+    #about-shutter-bottom {
+      bottom: 0;
+      transform: translateY(100%);
+    }
+
+    #about-shutter-top.close,
+    #about-shutter-bottom.close {
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    #about-shutter-top.open,
+    #about-shutter-bottom.open {
+      visibility: visible;
+      transform: translateY(-100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #about-shutter-bottom.open {
+      transform: translateY(100%);
+    }
+
+    /* 카메라 플래시 */
+    #about-flash {
+      position: fixed;
+      inset: 0;
+      z-index: 203;
+      background: #fff;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #about-content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 40px 40px;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    #about-content.visible { opacity: 1; }
+
     @media (max-width: 768px) {
       #poster-modal-close { top: 20px; right: 20px; }
       .poster-form { max-width: 100%; }
@@ -772,6 +878,19 @@
   <div id="project-detail">
     <div class="project-scroll" id="project-scroll"></div>
     <div id="project-detail-info"></div>
+  </div>
+
+  <!-- About ���터 인트로 + 콘텐츠 -->
+  <div id="about-overlay">
+    <div id="about-shutter">
+      <span id="about-shutter-text">jinho.kim</span>
+    </div>
+    <div id="about-shutter-top"></div>
+    <div id="about-shutter-bottom"></div>
+    <div id="about-flash"></div>
+    <div id="about-content">
+      <p style="color:#999;font-size:0.8rem;">About content coming soon...</p>
+    </div>
   </div>
 
   <div id="poster-modal">
@@ -900,6 +1019,7 @@
       const catPhotosMap = {};  // subName -> [photoSrc, ...]
       const gridDataMap  = {};  // catId -> sub  (type=grid)
       const splitDataMap = {};  // subName -> { projects: [...], allPhotos: [...] }  (type=split)
+      const aboutDataMap = {};  // catId -> true  (type=about)
 
       const visibleCategories = categories.filter(c => c.visible !== false);
       visibleCategories.forEach(cat => {
@@ -908,6 +1028,7 @@
         visibleSubs.forEach(sub => {
           subInfoMap[sub.name]   = { title: sub.title, subtitle: sub.subtitle, type: sub.type };
           catPhotosMap[sub.name] = sub.photos || [];
+          if (sub.type === 'about') aboutDataMap[cat.id]    = true;
           if (sub.type === 'grid')  gridDataMap[cat.id]    = sub;
           if (sub.type === 'split') {
             const projects = sub.projects || [];
@@ -925,9 +1046,11 @@
         const li = document.createElement('li');
         li.className = 'nav-item';
         li.dataset.cat = cat.id;
+        const isAboutCat = visibleSubs.some(s => s.type === 'about');
         const hasSpecialType = visibleSubs.some(s => s.type === 'grid' || s.type === 'split');
-        li.innerHTML = `
-          <span class="nav-label">${cat.label}</span>
+        li.innerHTML = isAboutCat
+          ? `<span class="nav-label">${cat.label}</span>`
+          : `<span class="nav-label">${cat.label}</span>
           <ul class="sub-list${hasSpecialType ? ' horizontal' : ''}">
             ${visibleSubs.map(s => `<li><a href="#">${s.name}</a></li>`).join('')}
           </ul>`;
@@ -1005,18 +1128,31 @@
       // ── 스크롤 / 스와이프 ── (wheel은 아래 통합 처리)
 
       const SWIPE_THRESHOLD = 55;
-      let touchX = null, touchAccum = 0;
+      let touchX = null, touchY = null, touchAccumX = 0, touchAccumY = 0;
 
-      window.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; touchAccum = 0; }, { passive: true });
+      window.addEventListener('touchstart', e => {
+        touchX = e.touches[0].clientX;
+        touchY = e.touches[0].clientY;
+        touchAccumX = 0;
+        touchAccumY = 0;
+      }, { passive: true });
       window.addEventListener('touchmove', e => {
         if (touchX === null || galleryMode) return;
+        if (projectDetailMode || gridViewMode || splitViewMode) return;
         const dx = touchX - e.touches[0].clientX;
+        const dy = touchY - e.touches[0].clientY;
         touchX = e.touches[0].clientX;
-        touchAccum += dx;
-        while (touchAccum >=  SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) + 1); touchAccum -= SWIPE_THRESHOLD; }
-        while (touchAccum <= -SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) - 1); touchAccum += SWIPE_THRESHOLD; }
+        touchY = e.touches[0].clientY;
+        // 가로 스와이프 (기존)
+        touchAccumX += dx;
+        while (touchAccumX >=  SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) + 1); touchAccumX -= SWIPE_THRESHOLD; }
+        while (touchAccumX <= -SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) - 1); touchAccumX += SWIPE_THRESHOLD; }
+        // 세로 스와이프 (모바일: 위로 쓸면 다음, 아래로 쓸면 이전)
+        touchAccumY += dy;
+        while (touchAccumY >=  SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) + 1); touchAccumY -= SWIPE_THRESHOLD; }
+        while (touchAccumY <= -SWIPE_THRESHOLD) { goTo((catPhotoMode ? catCurrent : current) - 1); touchAccumY += SWIPE_THRESHOLD; }
       }, { passive: true });
-      window.addEventListener('touchend', () => { touchX = null; touchAccum = 0; });
+      window.addEventListener('touchend', () => { touchX = null; touchY = null; touchAccumX = 0; touchAccumY = 0; });
 
       // ── 갤러리 모드 ──
       const mobileSubBar  = document.getElementById('mobile-sub-bar');
@@ -1302,6 +1438,17 @@
           const navListEl = document.querySelector('.nav-list');
           const isGridCat = !!gridDataMap[cat];
 
+          if (aboutDataMap[cat]) {
+            navItems.forEach(i => i.classList.remove('open'));
+            mobileSubBar.classList.remove('open');
+            if (aboutMode) { closeAbout(); return; }
+            openAbout();
+            return;
+          }
+
+          // About이 열려있으면 닫기
+          if (aboutMode) closeAbout();
+
           // 열려있는 뷰 모두 닫기
           if (posterModal.classList.contains('open')) {
             closePosterModal();
@@ -1456,6 +1603,7 @@
           closePosterModal();
           if (history.state && history.state.view === 'poster') history.back();
         }
+        if (aboutMode) closeAbout();
         if (projectDetailMode) closeProjectDetail();
         closeGridView();
         closeSplitView();
@@ -1464,6 +1612,98 @@
         navItems.forEach(i => i.classList.remove('open'));
         mobileSubBar.classList.remove('open');
       });
+      // ── About 셔터 인트로 ──
+      const aboutOverlay = document.getElementById('about-overlay');
+      const aboutShutter = document.getElementById('about-shutter');
+      const aboutShutterText = document.getElementById('about-shutter-text');
+      const aboutShutterTop = document.getElementById('about-shutter-top');
+      const aboutShutterBottom = document.getElementById('about-shutter-bottom');
+      const aboutFlash = document.getElementById('about-flash');
+      const aboutContent = document.getElementById('about-content');
+      let aboutMode = false;
+
+      function openAbout() {
+        if (aboutMode) return;
+        aboutMode = true;
+
+        // 다른 뷰 모두 닫기
+        closeGridView();
+        closeSplitView();
+        if (catPhotoMode) exitPhotoMode();
+        exitGallery();
+        bottomBar.style.display = 'none';
+
+        // 리셋
+        aboutOverlay.classList.add('open');
+        aboutShutter.classList.add('active');
+        aboutShutterText.style.transform = 'scale(1)';
+        aboutShutterText.style.opacity = '1';
+        aboutShutterText.style.transition = 'none';
+        aboutShutterTop.className = '';
+        aboutShutterBottom.className = '';
+        aboutFlash.style.opacity = '0';
+        aboutContent.classList.remove('visible');
+
+        // 1) "jinho.kim" 줌인 시작
+        requestAnimationFrame(() => {
+          aboutShutterText.style.transition = 'transform 1.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease';
+          requestAnimationFrame(() => {
+            aboutShutterText.style.transform = 'scale(8)';
+          });
+        });
+
+        // 2) 줌인 중간에 텍스트 페이드아웃
+        setTimeout(() => {
+          aboutShutterText.style.opacity = '0';
+        }, 800);
+
+        // 3) 셔터 블레이드 닫힘 (찰칵! 상하에서 닫힘)
+        setTimeout(() => {
+          aboutShutterTop.classList.add('close');
+          aboutShutterBottom.classList.add('close');
+        }, 1000);
+
+        // 4) 카메라 플래시 (하얗게 번쩍)
+        setTimeout(() => {
+          aboutFlash.style.transition = 'opacity 0.06s ease';
+          aboutFlash.style.opacity = '1';
+        }, 1300);
+
+        // 5) 플래시 사라짐
+        setTimeout(() => {
+          aboutFlash.style.transition = 'opacity 0.4s ease';
+          aboutFlash.style.opacity = '0';
+        }, 1400);
+
+        // 6) 셔터 블레이드 열림 + 콘텐츠 등장
+        setTimeout(() => {
+          aboutShutter.classList.remove('active');
+          aboutShutterTop.classList.remove('close');
+          aboutShutterTop.classList.add('open');
+          aboutShutterBottom.classList.remove('close');
+          aboutShutterBottom.classList.add('open');
+          aboutContent.classList.add('visible');
+        }, 1550);
+
+        // 7) 블레이드 정리
+        setTimeout(() => {
+          aboutShutterTop.className = '';
+          aboutShutterBottom.className = '';
+        }, 2000);
+      }
+
+      function closeAbout() {
+        if (!aboutMode) return;
+        aboutMode = false;
+        aboutOverlay.classList.remove('open');
+        aboutContent.classList.remove('visible');
+        aboutShutter.classList.remove('active');
+        aboutShutterTop.className = '';
+        aboutShutterBottom.className = '';
+        aboutFlash.style.opacity = '0';
+        bottomBar.style.display = '';
+      }
+
       // ── Get Poster 모달 ──
       const posterModal = document.getElementById('poster-modal');
       const posterPreviewImg = document.getElementById('poster-preview-img');
@@ -1548,6 +1788,15 @@
       });
 
     })();
+
+    // ── 캡처 방지: 우클릭 + 단축키 ──
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.addEventListener('keydown', e => {
+      // Ctrl+S, Ctrl+U, Ctrl+Shift+I
+      if (e.ctrlKey && (e.key === 's' || e.key === 'u' || (e.shiftKey && e.key === 'I'))) {
+        e.preventDefault();
+      }
+    });
   </script>
 </body>
 </html>
