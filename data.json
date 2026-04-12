@@ -408,7 +408,8 @@
     "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990478/uhlaeiejldpldj9jcqi3.jpg",
     "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990479/qkffzsiubaxljnjjif7r.jpg",
     "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990480/zvhrd400ehhusnm1kvfh.jpg",
-    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990481/ydrbqhwmrsrbb4t4bg8x.jpg"
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990481/ydrbqhwmrsrbb4t4bg8x.jpg",
+    "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990513/vf0xeygnkwtxbco2npld.jpg"
   ],
   "categories": [
     {
@@ -706,6 +707,9 @@
                 "./images/DSC02729.JPG"
               ]
             }
+          ],
+          "photos": [
+            "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990513/vf0xeygnkwtxbco2npld.jpg"
           ]
         },
         {
