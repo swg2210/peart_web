@@ -463,6 +463,9 @@
     }
 
     .sub-row span { font-size: 0.82rem; }
+    .sub-row.dragging { opacity: 0.4; border: 2px dashed #555; }
+    .sub-row.drag-over { border: 2px dashed var(--accent); }
+    .sub-row .drag-handle { cursor: grab; color: var(--text-dim); font-size: 1rem; margin-right: 8px; user-select: none; }
 
     /* ── TAG ── */
     .tag {
@@ -856,9 +859,16 @@ function renderCatEditor(catId) {
 
       <div class="sub-list-manage">
         <h3>하위 카테고리 (${cat.subcategories.length}개)</h3>
-        ${cat.subcategories.map(sub => `
-          <div class="sub-row">
-            <span>${sub.name}</span>
+        ${cat.subcategories.map((sub, idx) => `
+          <div class="sub-row" draggable="true"
+            ondragstart="onSubDragStart(event,${idx},'${cat.id}')"
+            ondragover="onSubDragOver(event,this)"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="onSubDrop(event,${idx},'${cat.id}')">
+            <div style="display:flex;align-items:center">
+              <span class="drag-handle">≡</span>
+              <span>${sub.name}</span>
+            </div>
             <div style="display:flex;gap:6px;align-items:center">
               <span class="tag">${sub.photos.length}장</span>
               <button class="btn btn-sm" onclick="selectSub('${cat.id}','${sub.id}')">편집</button>
@@ -867,6 +877,31 @@ function renderCatEditor(catId) {
         ${cat.subcategories.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">하위 카테고리가 없습니다.</p>` : ''}
       </div>
     </div>`;
+}
+
+let subDragIdx = null;
+function onSubDragStart(e, idx, catId) {
+  subDragIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+  setTimeout(() => e.target.classList.remove('dragging'), 0);
+}
+function onSubDragOver(e, el) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  el.classList.add('drag-over');
+}
+function onSubDrop(e, dropIdx, catId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (subDragIdx === null || subDragIdx === dropIdx) return;
+  const cat = siteData.categories.find(c => c.id === catId);
+  if (!cat) return;
+  const [moved] = cat.subcategories.splice(subDragIdx, 1);
+  cat.subcategories.splice(dropIdx, 0, moved);
+  subDragIdx = null;
+  document.getElementById('editor-area').innerHTML = renderCatEditor(catId);
+  saveData();
 }
 
 function cat_updateLabel(catId, value) {
