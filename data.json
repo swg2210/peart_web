@@ -695,7 +695,8 @@
           ],
           "photos": [
             "https://res.cloudinary.com/dw0q5sxc6/image/upload/v1775990513/vf0xeygnkwtxbco2npld.jpg"
-          ]
+          ],
+          "visible": false
         },
         {
           "id": "interior",
@@ -734,7 +735,8 @@
               "coverPhoto": "",
               "photos": []
             }
-          ]
+          ],
+          "visible": false
         }
       ]
     }
