@@ -1268,6 +1268,7 @@
             e.preventDefault();
             const name = a.textContent.trim();
             const info = subInfoMap[name] || {};
+            if (projectDetailMode) closeProjectDetail();
             if (info.type === 'grid') {
               let targetCatId = null;
               categories.forEach(cat => {
