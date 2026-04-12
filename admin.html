@@ -234,6 +234,14 @@
     .sub-actions { display: flex; gap: 2px; opacity: 0; }
     .sub-item:hover .sub-actions { opacity: 1; }
 
+    .vis-toggle { position: relative; width: 28px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .vis-toggle input { display: none; }
+    .vis-toggle .slider { position: absolute; inset: 0; background: #444; border-radius: 8px; transition: background 0.2s; }
+    .vis-toggle .slider::before { content: ''; position: absolute; width: 12px; height: 12px; left: 2px; top: 2px; background: #888; border-radius: 50%; transition: transform 0.2s, background 0.2s; }
+    .vis-toggle input:checked + .slider { background: var(--success); }
+    .vis-toggle input:checked + .slider::before { transform: translateX(12px); background: #fff; }
+    .cat-header.hidden, .sub-item.hidden { opacity: 0.35; }
+
     #sidebar-footer {
       padding: 16px 20px 0;
       border-top: 1px solid var(--border);
@@ -793,18 +801,26 @@ function renderSidebar() {
     const group = document.createElement('div');
     group.className = 'cat-group';
     group.innerHTML = `
-      <div class="cat-header ${selectedCatId === cat.id && !selectedSubId ? 'active' : ''}"
+      <div class="cat-header ${selectedCatId === cat.id && !selectedSubId ? 'active' : ''} ${cat.visible === false ? 'hidden' : ''}"
            onclick="selectCat('${cat.id}')">
         <span class="cat-name">${cat.label}</span>
         <div class="cat-actions">
+          <label class="vis-toggle" title="표시/숨김" onclick="event.stopPropagation()">
+            <input type="checkbox" ${cat.visible !== false ? 'checked' : ''} onchange="toggleCatVisible('${cat.id}',this.checked)">
+            <span class="slider"></span>
+          </label>
           <button class="btn-icon" title="카테고리 삭제" onclick="event.stopPropagation();confirmDelete('cat','${cat.id}')">✕</button>
         </div>
       </div>
       ${cat.subcategories.map(sub => `
-        <div class="sub-item ${selectedSubId === sub.id ? 'active' : ''}"
+        <div class="sub-item ${selectedSubId === sub.id ? 'active' : ''} ${sub.visible === false ? 'hidden' : ''}"
              onclick="selectSub('${cat.id}','${sub.id}')">
           <span class="sub-name">${sub.name}</span>
           <div class="sub-actions">
+            <label class="vis-toggle" title="표시/숨김" onclick="event.stopPropagation()">
+              <input type="checkbox" ${sub.visible !== false ? 'checked' : ''} onchange="toggleSubVisible('${cat.id}','${sub.id}',this.checked)">
+              <span class="slider"></span>
+            </label>
             <button class="btn-icon" title="하위 카테고리 삭제" onclick="event.stopPropagation();confirmDelete('sub','${sub.id}','${cat.id}')">✕</button>
           </div>
         </div>`).join('')}
@@ -877,6 +893,16 @@ function renderCatEditor(catId) {
         ${cat.subcategories.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">하위 카테고리가 없습니다.</p>` : ''}
       </div>
     </div>`;
+}
+
+function toggleCatVisible(catId, checked) {
+  const cat = siteData.categories.find(c => c.id === catId);
+  if (cat) { cat.visible = checked; renderSidebar(); }
+}
+function toggleSubVisible(catId, subId, checked) {
+  const cat = siteData.categories.find(c => c.id === catId);
+  const sub = cat?.subcategories.find(s => s.id === subId);
+  if (sub) { sub.visible = checked; renderSidebar(); }
 }
 
 let subDragIdx = null;

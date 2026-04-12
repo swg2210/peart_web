@@ -901,9 +901,11 @@
       const gridDataMap  = {};  // catId -> sub  (type=grid)
       const splitDataMap = {};  // subName -> { projects: [...], allPhotos: [...] }  (type=split)
 
-      categories.forEach(cat => {
-        subDataMap[cat.id] = cat.subcategories.map(s => s.name);
-        cat.subcategories.forEach(sub => {
+      const visibleCategories = categories.filter(c => c.visible !== false);
+      visibleCategories.forEach(cat => {
+        const visibleSubs = cat.subcategories.filter(s => s.visible !== false);
+        subDataMap[cat.id] = visibleSubs.map(s => s.name);
+        visibleSubs.forEach(sub => {
           subInfoMap[sub.name]   = { title: sub.title, subtitle: sub.subtitle, type: sub.type };
           catPhotosMap[sub.name] = sub.photos || [];
           if (sub.type === 'grid')  gridDataMap[cat.id]    = sub;
@@ -917,15 +919,17 @@
 
       // ── Nav 동적 생성 ──
       const navList = document.getElementById('nav-list');
-      categories.forEach(cat => {
+      visibleCategories.forEach(cat => {
+        const visibleSubs = cat.subcategories.filter(s => s.visible !== false);
+        if (!visibleSubs.length) return;
         const li = document.createElement('li');
         li.className = 'nav-item';
         li.dataset.cat = cat.id;
-        const hasSpecialType = cat.subcategories.some(s => s.type === 'grid' || s.type === 'split');
+        const hasSpecialType = visibleSubs.some(s => s.type === 'grid' || s.type === 'split');
         li.innerHTML = `
           <span class="nav-label">${cat.label}</span>
           <ul class="sub-list${hasSpecialType ? ' horizontal' : ''}">
-            ${cat.subcategories.map(s => `<li><a href="#">${s.name}</a></li>`).join('')}
+            ${visibleSubs.map(s => `<li><a href="#">${s.name}</a></li>`).join('')}
           </ul>`;
         navList.appendChild(li);
       });
