@@ -742,93 +742,58 @@
       inset: 0;
       z-index: 200;
       background: #fff;
-      display: none;
-      flex-direction: column;
-    }
-
-    #about-overlay.open { display: flex; }
-
-    #about-shutter {
-      position: fixed;
-      inset: 0;
-      z-index: 201;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      visibility: hidden;
-    }
-
-    #about-shutter.active { visibility: visible; }
-
-    #about-shutter-text {
-      font-weight: 700;
-      font-size: 2.4rem;
-      letter-spacing: -0.02em;
-      color: #111;
-    }
-
-    /* 셔터 블레이드 (상하에서 닫히는 검정 커튼) */
-    #about-shutter-top,
-    #about-shutter-bottom {
-      position: fixed;
-      left: 0; right: 0;
-      height: 50vh;
-      background: #111;
-      z-index: 202;
-      visibility: hidden;
-      transition: transform 0.3s cubic-bezier(0.7, 0, 0.3, 1);
-    }
-
-    #about-shutter-top {
-      top: 0;
-      transform: translateY(-100%);
-    }
-
-    #about-shutter-bottom {
-      bottom: 0;
-      transform: translateY(100%);
-    }
-
-    #about-shutter-top.close,
-    #about-shutter-bottom.close {
-      visibility: visible;
-      transform: translateY(0);
-    }
-
-    #about-shutter-top.open,
-    #about-shutter-bottom.open {
-      visibility: visible;
-      transform: translateY(-100%);
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    #about-shutter-bottom.open {
-      transform: translateY(100%);
-    }
-
-    /* 카메라 플래시 */
-    #about-flash {
-      position: fixed;
-      inset: 0;
-      z-index: 203;
-      background: #fff;
       opacity: 0;
       pointer-events: none;
+      transition: opacity 0.4s ease;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #about-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     #about-content {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 100px 40px 40px;
-      opacity: 0;
-      transition: opacity 0.6s ease;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 120px 36px 80px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      color: #111;
+      line-height: 2;
+      font-size: 0.82rem;
+      letter-spacing: 0.01em;
     }
 
-    #about-content.visible { opacity: 1; }
+    #about-content .about-headline {
+      font-family: 'EB Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      font-style: italic;
+      color: #111;
+      margin-bottom: 40px;
+      line-height: 1.6;
+    }
+
+    #about-content .about-body p {
+      margin-bottom: 24px;
+    }
+
+    #about-content .about-signature {
+      margin-top: 48px;
+      font-size: 0.75rem;
+      color: #999;
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 768px) {
+      #about-content {
+        padding: 90px 24px 60px;
+        max-width: 100%;
+        font-size: 0.78rem;
+      }
+    }
 
     @media (max-width: 768px) {
       #poster-modal-close { top: 20px; right: 20px; }
@@ -882,14 +847,16 @@
 
   <!-- About ���터 인트로 + 콘텐츠 -->
   <div id="about-overlay">
-    <div id="about-shutter">
-      <span id="about-shutter-text">jinho.kim</span>
-    </div>
-    <div id="about-shutter-top"></div>
-    <div id="about-shutter-bottom"></div>
-    <div id="about-flash"></div>
     <div id="about-content">
-      <p style="color:#999;font-size:0.8rem;">About content coming soon...</p>
+      <div class="about-headline">"우리의 매일이 예술이 되는 찰나"</div>
+      <div class="about-body">
+        <p>안녕하세요, 사진작가 김진호입니다.</p>
+        <p>저는 카메라를 들고 거리에 나설 때 가장 큰 자유를 느낍니다. 거창한 피사체를 찾기보다, 무심코 지나치는 벽면의 그림자, 오후의 빛이 만들어낸 도시의 질감, 그리고 그 속을 바삐 혹은 느긋하게 살아가는 사람들의 뒷모습에 시선을 둡니다.</p>
+        <p>제가 지향하는 사진은 강렬한 충격이나 영감을 강요하는 사진이 아닙니다. 대신, 보는 이의 마음에 잔잔한 여백을 남기는 사진이고 싶습니다. 문득 펼쳐보았을 때, "세상은 여전히 이렇게 평온하구나"라는 안도감을 줄 수 있는 그런 사진 말이죠.</p>
+        <p>특별한 무언가를 포착하기보다, 보편적인 것들에서 발견하는 '느낌 좋은 순간'들을 믿습니다.</p>
+        <p>제 사진이 당신의 공간에서 가장 편안한 휴식이 되길 바랍니다.</p>
+      </div>
+      <div class="about-signature">김진호 — jinho.kim</div>
     </div>
   </div>
 
@@ -1612,95 +1579,25 @@
         navItems.forEach(i => i.classList.remove('open'));
         mobileSubBar.classList.remove('open');
       });
-      // ── About 셔터 인트로 ──
+      // ── About ──
       const aboutOverlay = document.getElementById('about-overlay');
-      const aboutShutter = document.getElementById('about-shutter');
-      const aboutShutterText = document.getElementById('about-shutter-text');
-      const aboutShutterTop = document.getElementById('about-shutter-top');
-      const aboutShutterBottom = document.getElementById('about-shutter-bottom');
-      const aboutFlash = document.getElementById('about-flash');
-      const aboutContent = document.getElementById('about-content');
       let aboutMode = false;
 
       function openAbout() {
         if (aboutMode) return;
         aboutMode = true;
-
-        // 다른 뷰 모두 닫기
         closeGridView();
         closeSplitView();
         if (catPhotoMode) exitPhotoMode();
         exitGallery();
         bottomBar.style.display = 'none';
-
-        // 리셋
         aboutOverlay.classList.add('open');
-        aboutShutter.classList.add('active');
-        aboutShutterText.style.transform = 'scale(1)';
-        aboutShutterText.style.opacity = '1';
-        aboutShutterText.style.transition = 'none';
-        aboutShutterTop.className = '';
-        aboutShutterBottom.className = '';
-        aboutFlash.style.opacity = '0';
-        aboutContent.classList.remove('visible');
-
-        // 1) "jinho.kim" 줌인 시작
-        requestAnimationFrame(() => {
-          aboutShutterText.style.transition = 'transform 1.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease';
-          requestAnimationFrame(() => {
-            aboutShutterText.style.transform = 'scale(8)';
-          });
-        });
-
-        // 2) 줌인 중간에 텍스트 페이드아웃
-        setTimeout(() => {
-          aboutShutterText.style.opacity = '0';
-        }, 800);
-
-        // 3) 셔터 블레이드 닫힘 (찰칵! 상하에서 닫힘)
-        setTimeout(() => {
-          aboutShutterTop.classList.add('close');
-          aboutShutterBottom.classList.add('close');
-        }, 1000);
-
-        // 4) 카메라 플래시 (하얗게 번쩍)
-        setTimeout(() => {
-          aboutFlash.style.transition = 'opacity 0.06s ease';
-          aboutFlash.style.opacity = '1';
-        }, 1300);
-
-        // 5) 플래시 사라짐
-        setTimeout(() => {
-          aboutFlash.style.transition = 'opacity 0.4s ease';
-          aboutFlash.style.opacity = '0';
-        }, 1400);
-
-        // 6) 셔터 블레이드 열림 + 콘텐츠 등장
-        setTimeout(() => {
-          aboutShutter.classList.remove('active');
-          aboutShutterTop.classList.remove('close');
-          aboutShutterTop.classList.add('open');
-          aboutShutterBottom.classList.remove('close');
-          aboutShutterBottom.classList.add('open');
-          aboutContent.classList.add('visible');
-        }, 1550);
-
-        // 7) 블레이드 정리
-        setTimeout(() => {
-          aboutShutterTop.className = '';
-          aboutShutterBottom.className = '';
-        }, 2000);
       }
 
       function closeAbout() {
         if (!aboutMode) return;
         aboutMode = false;
         aboutOverlay.classList.remove('open');
-        aboutContent.classList.remove('visible');
-        aboutShutter.classList.remove('active');
-        aboutShutterTop.className = '';
-        aboutShutterBottom.className = '';
-        aboutFlash.style.opacity = '0';
         bottomBar.style.display = '';
       }
 
