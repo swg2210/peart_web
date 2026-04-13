@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;700&family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -52,7 +53,7 @@
 
     .header-brand {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.25rem;
       letter-spacing: -0.01em;
       cursor: pointer;
     }
@@ -76,7 +77,7 @@
     }
 
     .nav-label {
-      font-size: 0.72rem;
+      font-size: 0.8125rem;
       letter-spacing: 0.02em;
       color: #111;
       opacity: 0.5;
@@ -106,7 +107,7 @@
     .nav-item.open .sub-list { display: flex; }
 
     .sub-list a {
-      font-size: 0.65rem;
+      font-size: 0.8125rem;
       letter-spacing: 0.02em;
       color: #111;
       text-decoration: none;
@@ -740,7 +741,7 @@
     #about-overlay {
       position: fixed;
       inset: 0;
-      z-index: 200;
+      z-index: 95;
       background: #fff;
       opacity: 0;
       pointer-events: none;
@@ -754,44 +755,155 @@
       pointer-events: auto;
     }
 
+    /* ── About 셔터 인트로 ── */
+    #about-photo-intro {
+      position: fixed;
+      inset: 0;
+      z-index: 99;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+    }
+
+    #about-photo-intro img {
+      max-width: 80vw;
+      max-height: 75vh;
+      object-fit: contain;
+      animation: aboutKenburns 3s ease-in-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes aboutKenburns {
+      from { transform: scale(1); }
+      to   { transform: scale(1.02); }
+    }
+
+    .shutter-blade {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 0;
+      background: #fff;
+      z-index: 2;
+      transition: none;
+    }
+
+    .shutter-blade.top { top: 0; }
+    .shutter-blade.bottom { bottom: 0; }
+
+    .shutter-blade.closing {
+      height: 50%;
+      transition: height 0.25s cubic-bezier(0.4, 0, 1, 1);
+    }
+
+    #about-photo-intro.done {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      #about-photo-intro img {
+        max-width: 90vw;
+        max-height: 70vh;
+      }
+    }
+
+    /* ── About 콘텐츠 ── */
     #about-content {
-      max-width: 520px;
+      max-width: 560px;
       margin: 0 auto;
-      padding: 120px 36px 80px;
-      font-family: 'Noto Sans KR', sans-serif;
+      padding: 40px 36px 100px;
+      font-family: 'Pretendard Variable', 'Pretendard', sans-serif;
       font-weight: 300;
-      color: #111;
-      line-height: 2;
-      font-size: 0.82rem;
-      letter-spacing: 0.01em;
+      color: #222;
+      line-height: 1.5;
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    #about-content.visible {
+      opacity: 1;
     }
 
     #about-content .about-headline {
       font-family: 'EB Garamond', serif;
-      font-size: 1.1rem;
-      font-weight: 400;
-      font-style: italic;
+      font-size: 1.6rem;
+      font-weight: 700;
+      font-style: normal;
       color: #111;
-      margin-bottom: 40px;
-      line-height: 1.6;
+      margin-bottom: 30px;
+      line-height: 1.4;
+      letter-spacing: -0.01em;
     }
 
     #about-content .about-body p {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+      color: #444;
+    }
+
+    #about-content .about-en {
+      margin-top: 40px;
+      padding-top: 28px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    #about-content .about-en .about-headline {
+      font-size: 1.6rem;
+    }
+
+    #about-content .about-en .about-body p {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      letter-spacing: 0.02em;
+      color: #555;
     }
 
     #about-content .about-signature {
-      margin-top: 48px;
-      font-size: 0.75rem;
-      color: #999;
-      letter-spacing: 0.02em;
+      margin-top: 64px;
+      font-family: 'EB Garamond', serif;
+      font-size: 0.8rem;
+      color: #aaa;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .about-contact {
+      display: inline-block;
+      padding: 8px 20px;
+      background: #111;
+      color: #fff;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 300;
+      letter-spacing: 0.03em;
+      text-decoration: none;
+      border-radius: 20px;
+      transition: opacity 0.2s;
+      pointer-events: auto;
+    }
+
+    .about-contact:hover {
+      opacity: 0.7;
     }
 
     @media (max-width: 768px) {
       #about-content {
-        padding: 90px 24px 60px;
+        padding: 20px 28px 60px;
         max-width: 100%;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
+      }
+      #about-content .about-headline {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+      }
+      #about-content .about-en .about-headline {
+        font-size: 1.15rem;
       }
     }
 
@@ -811,7 +923,7 @@
         <ul class="nav-list" id="nav-list"></ul>
       </nav>
     </div>
-    <a class="header-right" href="https://www.instagram.com/__peart?igsh=MTVoaG02NW1qMXJvOQ==" target="_blank" rel="noopener">Contact ↗</a>
+    <a class="header-right" href="https://www.instagram.com/__peart?igsh=MTVoaG02NW1qMXJvOQ==" target="_blank" rel="noopener" style="display:none;">Contact ↗</a>
   </header>
 
   <div id="mobile-sub-bar">
@@ -847,6 +959,11 @@
 
   <!-- About ���터 인트로 + 콘텐츠 -->
   <div id="about-overlay">
+    <div id="about-photo-intro">
+      <img src="./images/about-profile.jpeg" alt="Jinho Kim">
+      <div class="shutter-blade top"></div>
+      <div class="shutter-blade bottom"></div>
+    </div>
     <div id="about-content">
       <div class="about-headline">"우리의 매일이 예술이 되는 찰나"</div>
       <div class="about-body">
@@ -856,7 +973,19 @@
         <p>특별한 무언가를 포착하기보다, 보편적인 것들에서 발견하는 '느낌 좋은 순간'들을 믿습니다.</p>
         <p>제 사진이 당신의 공간에서 가장 편안한 휴식이 되길 바랍니다.</p>
       </div>
-      <div class="about-signature">김진호 — jinho.kim</div>
+      <div class="about-en">
+        <div class="about-headline">"Moments Where the Everyday Becomes Art"</div>
+        <div class="about-body">
+          <p>Hello, I am photographer Jinho Kim.</p>
+          <p>I feel the greatest sense of freedom when I step out onto the streets with my camera. Rather than searching for grand subjects, I find myself drawn to the shadows on a wall, the urban textures created by the afternoon sun, and the silhouettes of people moving through life—whether in a hurry or at a leisurely pace.</p>
+          <p>The photography I aspire to is not about imposing intense shock or forced inspiration. Instead, I want my work to leave a quiet space in the viewer's heart. I hope that when someone happens upon my photos, they feel a sense of relief, thinking, "The world is still this peaceful."</p>
+          <p>Rather than capturing something extraordinary, I believe in the 'good-feeling moments' found within the ordinary. I hope my photography becomes a place of comfortable rest in your space.</p>
+        </div>
+      </div>
+      <div class="about-signature">
+        김진호 — jinho.kim
+        <a class="about-contact" href="https://www.instagram.com/__peart?igsh=MTVoaG02NW1qMXJvOQ==" target="_blank" rel="noopener">Contact ↗</a>
+      </div>
     </div>
   </div>
 
@@ -1408,7 +1537,12 @@
           if (aboutDataMap[cat]) {
             navItems.forEach(i => i.classList.remove('open'));
             mobileSubBar.classList.remove('open');
-            if (aboutMode) { closeAbout(); return; }
+            if (aboutMode) {
+              // 이미 열려있으면 인트로부터 다시 재생
+              closeAbout();
+              setTimeout(() => openAbout(), 50);
+              return;
+            }
             openAbout();
             return;
           }
@@ -1536,7 +1670,7 @@
           }
           return;
         }
-        if (gridViewMode || splitViewMode) return;
+        if (gridViewMode || splitViewMode || aboutMode) return;
         e.preventDefault();
         if (galleryMode) return;
         const idx = catPhotoMode ? catCurrent : current;
@@ -1583,6 +1717,11 @@
       const aboutOverlay = document.getElementById('about-overlay');
       let aboutMode = false;
 
+      const aboutPhotoIntro = document.getElementById('about-photo-intro');
+      const aboutContent = document.getElementById('about-content');
+      const siteHeader = document.getElementById('site-header');
+      let aboutTimer = null;
+
       function openAbout() {
         if (aboutMode) return;
         aboutMode = true;
@@ -1591,14 +1730,56 @@
         if (catPhotoMode) exitPhotoMode();
         exitGallery();
         bottomBar.style.display = 'none';
+
+        // 인트로 리셋
+        aboutPhotoIntro.classList.remove('done');
+        aboutPhotoIntro.style.display = '';
+        aboutContent.classList.remove('visible');
+        aboutOverlay.scrollTop = 0;
+
+        // 켄 번즈 리셋 (reflow 트리거)
+        const introImg = aboutPhotoIntro.querySelector('img');
+        introImg.style.animation = 'none';
+        introImg.offsetHeight;
+        introImg.style.animation = '';
+
+        const bladeTop = aboutPhotoIntro.querySelector('.shutter-blade.top');
+        const bladeBot = aboutPhotoIntro.querySelector('.shutter-blade.bottom');
+        bladeTop.className = 'shutter-blade top';
+        bladeBot.className = 'shutter-blade bottom';
+
         aboutOverlay.classList.add('open');
+        aboutOverlay.prepend(siteHeader);
+        siteHeader.style.position = 'relative';
+
+        // 2초 후 셔터 닫기
+        aboutTimer = setTimeout(() => {
+          bladeTop.classList.add('closing');
+          bladeBot.classList.add('closing');
+
+          // 셔터 닫힌 후 0.3초 뒤 열기 + 사진 제거
+          setTimeout(() => {
+            aboutPhotoIntro.classList.add('done');
+            bladeTop.classList.remove('closing');
+            bladeBot.classList.remove('closing');
+
+            // 텍스트 페이드인
+            setTimeout(() => {
+              aboutContent.classList.add('visible');
+            }, 100);
+          }, 350);
+        }, 2000);
       }
 
       function closeAbout() {
         if (!aboutMode) return;
         aboutMode = false;
+        if (aboutTimer) { clearTimeout(aboutTimer); aboutTimer = null; }
         aboutOverlay.classList.remove('open');
+        aboutContent.classList.remove('visible');
         bottomBar.style.display = '';
+        document.body.prepend(siteHeader);
+        siteHeader.style.position = '';
       }
 
       // ── Get Poster 모달 ──
