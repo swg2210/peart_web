@@ -738,7 +738,8 @@
           ],
           "visible": false
         }
-      ]
+      ],
+      "visible": true
     }
   ]
 }
