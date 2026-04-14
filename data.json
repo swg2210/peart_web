@@ -736,7 +736,8 @@
             }
           ]
         }
-      ]
+      ],
+      "visible": false
     },
     {
       "id": "about",
