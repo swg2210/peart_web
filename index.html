@@ -1152,6 +1152,9 @@
         bottomBar.style.transition = 'opacity 0.5s ease';
         requestAnimationFrame(() => { bottomBar.style.opacity = '1'; });
       }, 800);
+      // 초기 Get Poster 버튼 가시성 — 첫 사진이 sellable일 때만
+      // (currentPhotoObject/photoBySrc는 아래에서 정의되므로 preload 이후 setTimeout으로 지연)
+      setTimeout(() => { if (typeof updateGetPosterVisibility === 'function') updateGetPosterVisibility(); }, 0);
 
       // ── 카테고리 데이터 맵 ──
       const subDataMap   = {};  // catId -> [subName, ...]
@@ -1209,6 +1212,17 @@
       });
 
       // ── 포토 전환 ──
+      function currentPhotoObject() {
+        const idx = catPhotoMode ? catPhotoIndices[catCurrent] : current;
+        const src = photos[idx] && photos[idx].dataset.originalSrc;
+        return src ? photoBySrc.get(src) : null;
+      }
+      function updateGetPosterVisibility() {
+        if (!getPosterBtn) return;
+        const p = currentPhotoObject();
+        getPosterBtn.style.display = isSellable(p) ? '' : 'none';
+      }
+
       function goTo(idx) {
         if (busy) return;
         if (catPhotoMode) {
@@ -1220,6 +1234,7 @@
           photos[catPhotoIndices[idx]].classList.add('active');
           catCurrent = idx;
           counter.textContent = `${String(catCurrent + 1).padStart(2, '0')} / ${String(catPhotoIndices.length).padStart(2, '0')}`;
+          updateGetPosterVisibility();
           setTimeout(() => { busy = false; }, 200);
           return;
         }
@@ -1236,6 +1251,7 @@
         photos[idx].classList.add('active');
         current = idx;
         counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
+        updateGetPosterVisibility();
         setTimeout(() => { busy = false; }, 200);
       }
 
@@ -1267,6 +1283,7 @@
         counter.textContent = `01 / ${String(catPhotoIndices.length).padStart(2, '0')}`;
         bottomBar.style.transition = 'opacity 0.5s ease';
         requestAnimationFrame(() => { bottomBar.style.opacity = '1'; });
+        updateGetPosterVisibility();
       }
 
       function exitPhotoMode() {
@@ -1274,6 +1291,7 @@
         photos.forEach(p => p.classList.remove('active'));
         photos[current].classList.add('active');
         counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
+        updateGetPosterVisibility();
       }
 
       // ── 스크롤 / 스와이프 ── (wheel은 아래 통합 처리)
