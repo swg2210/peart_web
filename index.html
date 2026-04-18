@@ -1036,19 +1036,32 @@
         return;
       }
 
+      window.__data = siteData;
       const { allPhotos: rawAllPhotos, categories } = siteData;
+
+      // ── Shop 헬퍼 ──
+      function getSrc(p)     { return typeof p === 'string' ? p : p.src; }
+      function isSellable(p) { return typeof p !== 'string' && p.sellable === true; }
+      function getSizes(p) {
+        if (typeof p === 'string') return [];
+        return Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ['A3', 'A2'];
+      }
+      function getName(p)    { return typeof p === 'string' ? '' : (p.name || ''); }
+      const DEFAULT_PRICES = { A3: 50000, A2: 80000 };
+      function getPrices()    { return (window.__data && window.__data.shop && window.__data.shop.prices) || DEFAULT_PRICES; }
+      function formatPrice(n) { return '₩' + (n || 0).toLocaleString('ko-KR'); }
 
       // ── 카테고리에 등록된 사진을 제외하고 메인 전용 사진만 사용 ──
       const catPhotoSet = new Set();
       categories.forEach(cat => {
         (cat.subcategories || []).forEach(sub => {
-          (sub.photos || []).forEach(p => catPhotoSet.add(p));
+          (sub.photos || []).forEach(p => catPhotoSet.add(getSrc(p)));
           (sub.projects || []).forEach(proj => {
-            (proj.photos || []).forEach(p => catPhotoSet.add(p));
+            (proj.photos || []).forEach(p => catPhotoSet.add(getSrc(p)));
           });
         });
       });
-      const allPhotos = rawAllPhotos.filter(p => !catPhotoSet.has(p));
+      const allPhotos = rawAllPhotos.filter(p => !catPhotoSet.has(getSrc(p)));
 
       // ── 포토 스테이지 구성 (intro-cover 첫 번째, 나머지 셔플) ──
       const introPhoto = allPhotos[0];
