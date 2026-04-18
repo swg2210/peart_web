@@ -1070,8 +1070,27 @@
         const j = Math.floor(Math.random() * (i + 1));
         [rest[i], rest[j]] = [rest[j], rest[i]];
       }
-      const all = [introPhoto, ...rest];
-      const N = all.length;
+      const mainOnly = [introPhoto, ...rest];
+      const N = mainOnly.length;   // 메인 슬라이더 범위
+
+      // 카테고리 사진도 stage에 포함 (포토모드에서 매칭용)
+      const mainSet = new Set(mainOnly);
+      const catPhotosFlat = [];
+      categories.forEach(cat => {
+        (cat.subcategories || []).forEach(sub => {
+          (sub.photos || []).forEach(p => {
+            const s = getSrc(p);
+            if (!mainSet.has(s)) catPhotosFlat.push(s);
+          });
+          (sub.projects || []).forEach(proj => {
+            (proj.photos || []).forEach(p => {
+              const s = getSrc(p);
+              if (!mainSet.has(s)) catPhotosFlat.push(s);
+            });
+          });
+        });
+      });
+      const all = [...mainOnly, ...catPhotosFlat];
 
       const stage   = document.getElementById('stage');
       const counter = document.getElementById('counter');
@@ -1142,18 +1161,29 @@
       const splitDataMap = {};  // subName -> { projects: [...], allPhotos: [...] }  (type=split)
       const aboutDataMap = {};  // catId -> true  (type=about)
 
+      // ── 전체 사진을 src 기준으로 원본 객체 맵 구축 (Shop / Sellable 조회용) ──
+      const photoBySrc = new Map();
+      categories.forEach(cat => {
+        (cat.subcategories || []).forEach(sub => {
+          (sub.photos || []).forEach(p => photoBySrc.set(getSrc(p), p));
+          (sub.projects || []).forEach(proj => {
+            (proj.photos || []).forEach(p => photoBySrc.set(getSrc(p), p));
+          });
+        });
+      });
+
       const visibleCategories = categories.filter(c => c.visible !== false);
       visibleCategories.forEach(cat => {
         const visibleSubs = cat.subcategories.filter(s => s.visible !== false);
         subDataMap[cat.id] = visibleSubs.map(s => s.name);
         visibleSubs.forEach(sub => {
           subInfoMap[sub.name]   = { title: sub.title, subtitle: sub.subtitle, type: sub.type };
-          catPhotosMap[sub.name] = sub.photos || [];
+          catPhotosMap[sub.name] = (sub.photos || []).map(getSrc);
           if (sub.type === 'about') aboutDataMap[cat.id]    = true;
           if (sub.type === 'grid')  gridDataMap[cat.id]    = sub;
           if (sub.type === 'split') {
             const projects = sub.projects || [];
-            const allPhotos = projects.flatMap(p => p.photos || []);
+            const allPhotos = projects.flatMap(p => (p.photos || []).map(getSrc));
             splitDataMap[sub.name] = { projects, allPhotos };
           }
         });
@@ -1446,7 +1476,7 @@
 
       function openProjectDetail(project) {
         projectDetailMode = true;
-        const photos = project.photos || [];
+        const photos = (project.photos || []).map(getSrc);
         projectPhotoCount = photos.length;
         projectCurrentIdx = 0;
         projectScroll.innerHTML = photos.map(src =>
