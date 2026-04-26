@@ -60,6 +60,7 @@ CLAUDE.md        # 이 파일
 - `gridViewMode`: Interior 3열 그리드
 - `projectDetailMode`: Interior 프로젝트 가로 스크롤 상세 뷰 (history.pushState로 뒤로가기 지원)
 - `splitViewMode`: Wedding split 뷰
+- `aboutOverlay`: About 페이지 오버레이 (`#about-overlay`, 셔터 블레이드 인트로 → 텍스트 콘텐츠)
 
 ### 네비게이션 플로우
 1. 상위 카테고리 클릭 → 하위 카테고리 리스트 표시 + 첫 번째 서브 자동 오픈
@@ -75,7 +76,7 @@ CLAUDE.md        # 이 파일
 - grid 타입 (Interior): `renderGridSubEditor` — Nav 이름 편집 + 프로젝트 추가/삭제, 프로젝트별 사진 관리
 - split 타입 (Wedding): `renderSplitSubEditor` — Nav 이름 편집 + 사진 업로드/삭제, 첫 사진이 대표사진
 
-## Current State (2026-04-09, 2차 업데이트)
+## Current State (2026-04-18)
 
 ### Commercial 카테고리
 - **Wedding** (type: split):
@@ -91,6 +92,30 @@ CLAUDE.md        # 이 파일
 - Seoul KR, ISLAND, Copenhagen DK, Malmö SE, Berlin DE, Berlin Bauhaus
 - 어드민에서 실제 사진 등록 완료 (Cloudinary URL)
 
+### About 페이지 (2026-04-12 이후 추가)
+- data.json에 `{ id: "about", type: "about" }` 카테고리 추가
+- index.html `#about-overlay` + `#about-content` + 셔터 블레이드 인트로 (`.shutter-blade.top/.bottom`, `closing` 클래스로 애니메이션)
+- 처음엔 셔터 인트로 버전 → 담백한 텍스트 버전 → 최종: 셔터 인트로 + 한/영 텍스트 + 타이포그래피 개선
+- 한국어/영어 bilingual 텍스트
+
+### 카테고리/서브카테고리 On/Off 토글
+- data.json 카테고리/서브에 `visible: false` 필드 (없으면 기본 true)
+- admin.html에 `.vis-toggle` 스위치 UI (28x16 슬라이더)
+- 메인 사이트는 `visible !== false`인 것만 렌더
+
+### 메인 allPhotos 정리 (2026-04-13 이후)
+- 메인 페이지는 카테고리에 등록된 사진은 제외, 메인 전용 사진만 노출
+- 중복 235장 제거 → 메인 전용 217장 유지
+
+### 모바일 세로 스와이프 사진 전환
+- `touchmove`에서 `touchAccumX` + `touchAccumY` 둘 다 처리
+- 위로 쓸면 다음 사진, 아래로 쓸면 이전 (가로/세로 모두 지원)
+- galleryMode/projectDetailMode/gridViewMode/splitViewMode에서는 비활성
+
+### 사진 캡처 방지
+- `document.addEventListener('contextmenu', e => e.preventDefault())` — 우클릭/길게 누르기 메뉴 차단
+- `user-select: none`, `-webkit-user-select: none` 전역 적용
+
 ### 모바일 최적화 (2026-04-09 적용 완료)
 - stage `top: 90px, bottom: 36px`로 헤더/카테고리/카운터 영역 확보
 - `.photo` max-height: `calc(100vh - 90px - 56px)`
@@ -104,8 +129,10 @@ CLAUDE.md        # 이 파일
 ### Admin Panel
 - 기본 타입 (Personal 등): 사진 업로드/삭제/순서변경 + 타이틀/서브타이틀 편집
 - grid 타입 (Interior): `renderGridSubEditor` — Nav 이름 편집 + 프로젝트 추가/삭제, 프로젝트별 사진 관리
-- split 타입 (Wedding): `renderSplitSubEditor` — Nav 이름 편집 + 사진 업로드/삭제 (아직 projects 구조 미반영, 기존 photos 배열 UI)
+- split 타입 (Wedding): `renderSplitSubEditor` — projects 배열 기반 관리 완료 (2026-04-12, commit 4b60df7). 프로젝트 추가/삭제 + 프로젝트별 사진 관리, 사진 삭제 시 프로젝트 접힘 방지
 - **메인 사진 관리**: 사이드바 최상단 "메인 사진" 항목 — allPhotos 업로드/삭제/순서변경
+- **하위 카테고리 드래그 순서 변경**: `.sub-row` 드래그 앤 드롭 (commit ce462c4)
+- **On/Off 토글**: 카테고리/서브카테고리별 visible 토글 스위치
 
 ### Get Poster 문의 기능 (2026-04-09 추가)
 - `#bottom-bar`: 카운터 + Get Poster 버튼을 하나로 묶은 하단 고정 바
@@ -126,9 +153,12 @@ CLAUDE.md        # 이 파일
 - PC/모바일 공통 적용
 - `transition: opacity 0.4s ease`로 사진 전환도 부드럽게
 
+### 갤러리 타이틀 노출 시간 (2026-04-10)
+- 기존 2초 → 0.7초로 단축 (commit 04589f7)
+- 너무 길어서 사진으로 넘어가는 리듬이 느린 문제 해결
+
 ## Pending Work
 - [ ] **Resend 설정** — Vercel 대시보드에 `RESEND_API_KEY`, `NOTIFY_EMAIL` 환경변수 등록 (resend.com 가입 → API 키 발급)
-- [ ] **admin.html 웨딩 프로젝트 관리 UI** — data.json이 projects 구조로 바뀌었으나 어드민은 아직 기존 photos 배열 UI. renderSplitSubEditor를 renderGridSubEditor처럼 프로젝트 단위 관리로 변경 필요
 - [ ] **포스터 가격 확정** — 현재 임시 가격 (A4 ₩30,000 / A3 ₩50,000 / A2 ₩80,000), 작가님 확정 후 수정
 - [ ] **포스터 문의 어드민 확인** — 이메일 외 어드민에서 문의 내역 리스트 확인 기능 (선택)
 - [ ] **사진 캡션 기능** — allPhotos를 객체 배열({src, title, desc})로 변환, 하단 제목/설명 표시 (작업 시작했으나 원복됨)
@@ -140,6 +170,15 @@ CLAUDE.md        # 이 파일
 - [ ] Landscape 대응
 - [ ] hover → active 전환
 - [ ] 렌더링 속도 추가 개선
+
+## Completed (이전 Pending에서 완료 이관)
+- [x] **admin.html 웨딩 프로젝트 관리 UI** → 2026-04-12 완료 (commit 4b60df7)
+- [x] **어드민 하위 카테고리 드래그 순서 변경** → 완료 (commit ce462c4)
+- [x] **프로젝트 상세 뷰 서브카테고리 전환 버그 수정** → 완료 (commit a78ef7b)
+- [x] **카테고리/서브카테고리 On/Off 토글** → 완료 (commit cd1bde1)
+- [x] **모바일 세로 스와이프 사진 전환** → 완료 (commit 85004fd)
+- [x] **사진 캡처 방지 (우클릭/user-select)** → 완료 (commit 85004fd)
+- [x] **About 페이지** → 완료 (commit 3304fc8)
 
 ## Design Reference
 - yosigo.es/commercial/ : Interior 그리드 레이아웃 참고

@@ -1001,9 +1001,7 @@
         <input type="text" id="poster-contact" placeholder="" autocomplete="email" required>
         <label>SIZE *</label>
         <select id="poster-size">
-          <option value="A4">A4 — ₩30,000</option>
-          <option value="A3">A3 — ₩50,000</option>
-          <option value="A2">A2 — ₩80,000</option>
+          <!-- 동적 생성 -->
         </select>
         <label>REQUEST</label>
         <textarea id="poster-request" placeholder=""></textarea>
@@ -1872,6 +1870,15 @@
           posterPhotoSrc = activePhoto.dataset.originalSrc || activePhoto.src;
           posterPreviewImg.src = optimizeImg(posterPhotoSrc, { w: 600 });
         }
+        // 사이즈 옵션 동적 생성
+        const photoObj = photoBySrc.get(posterPhotoSrc);
+        const sizes = (photoObj && Array.isArray(photoObj.sizes) && photoObj.sizes.length)
+          ? photoObj.sizes : ['A3', 'A2'];
+        const prices = getPrices();
+        const sizeSel = document.getElementById('poster-size');
+        sizeSel.innerHTML = sizes.map((s, i) =>
+          `<option value="${s}"${i === 0 ? ' selected' : ''}>${s} — ${formatPrice(prices[s])}</option>`
+        ).join('');
         posterModal.classList.add('open');
         bottomBar.style.display = 'none';
         // Contact → X 전환
@@ -1900,6 +1907,7 @@
         const name = document.getElementById('poster-name').value.trim();
         const contact = document.getElementById('poster-contact').value.trim();
         const size = document.getElementById('poster-size').value;
+        const price = getPrices()[size] || 0;
         const request = document.getElementById('poster-request').value.trim();
 
         if (!name || !contact) {
@@ -1915,7 +1923,7 @@
           const res = await fetch('/api/poster-inquiry', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, contact, size, request, photoSrc: posterPhotoSrc })
+            body: JSON.stringify({ name, contact, size, price, request, photoSrc: posterPhotoSrc })
           });
           const result = await res.json();
 

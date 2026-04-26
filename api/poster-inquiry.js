@@ -6,11 +6,15 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { name, contact, size, request, photoSrc } = req.body;
+  const { name, contact, size, price, request, photoSrc } = req.body;
 
   if (!name || !contact) {
     return res.status(400).json({ error: 'Name and contact are required.' });
   }
+
+  const priceText = (typeof price === 'number' && price > 0)
+    ? '₩' + price.toLocaleString('ko-KR')
+    : '';
 
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
   const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL;
@@ -36,7 +40,7 @@ export default async function handler(req, res) {
             <table style="width:100%;border-collapse:collapse;font-size:14px">
               <tr><td style="padding:8px 0;color:#999;width:100px">Name</td><td>${name}</td></tr>
               <tr><td style="padding:8px 0;color:#999">Contact</td><td>${contact}</td></tr>
-              <tr><td style="padding:8px 0;color:#999">Size</td><td>${size}</td></tr>
+              <tr><td style="padding:8px 0;color:#999">Size</td><td>${size}${priceText ? ' — ' + priceText : ''}</td></tr>
               <tr><td style="padding:8px 0;color:#999">Request</td><td>${request || '—'}</td></tr>
               <tr><td style="padding:8px 0;color:#999">Photo</td><td><a href="${photoSrc}">${photoSrc}</a></td></tr>
             </table>
