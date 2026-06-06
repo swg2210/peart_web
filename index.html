@@ -179,6 +179,21 @@
       justify-content: center;
     }
 
+    #empty-state {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      letter-spacing: 0.15em;
+      color: #888;
+      text-transform: uppercase;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #empty-state.show { display: flex; }
+
     .photo {
       position: absolute;
       max-height: 80vh;
@@ -931,6 +946,7 @@
   </div>
 
   <div id="stage"></div>
+  <div id="empty-state">준비중</div>
   <div id="gallery-overlay"></div>
   <div id="gallery-title"></div>
   <div id="bottom-bar">
@@ -1252,9 +1268,22 @@
         setTimeout(() => { busy = false; }, 200);
       }
 
+      const emptyState = document.getElementById('empty-state');
+      function showEmptyState() {
+        catPhotoMode = true;
+        catPhotoIndices = [];
+        catCurrent = 0;
+        photos.forEach(p => p.classList.remove('active'));
+        emptyState.classList.add('show');
+        counter.textContent = '00 / 00';
+        bottomBar.style.opacity = '0';
+        updateGetPosterVisibility();
+      }
+
       function enterPhotoMode(subName) {
+        emptyState.classList.remove('show');
         const photoSet = catPhotosMap[subName] || [];
-        if (!photoSet.length) return;
+        if (!photoSet.length) { showEmptyState(); return; }
         catPhotoMode = true;
         photos.forEach(p => p.classList.remove('active'));
         catPhotoIndices = [];
@@ -1267,7 +1296,7 @@
             catPhotoIndices.push(i);
           }
         });
-        if (!catPhotoIndices.length) { catPhotoMode = false; return; }
+        if (!catPhotoIndices.length) { showEmptyState(); return; }
         // 해당 카테고리 사진 전체 즉시 로드
         catPhotoIndices.forEach(idx => {
           if (!loadedSet.has(idx) && photos[idx].dataset.lazySrc) {
@@ -1285,6 +1314,7 @@
 
       function exitPhotoMode() {
         catPhotoMode = false;
+        emptyState.classList.remove('show');
         photos.forEach(p => p.classList.remove('active'));
         photos[current].classList.add('active');
         counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
@@ -1347,6 +1377,7 @@
       function openSplitView(subName) {
         const data = splitDataMap[subName];
         if (!data || !data.projects.length) return;
+        emptyState.classList.remove('show');
         splitViewMode = true;
 
         if (isMobile()) {
@@ -1432,6 +1463,7 @@
       function openGridView(catId) {
         const sub = gridDataMap[catId];
         if (!sub) return;
+        emptyState.classList.remove('show');
         gridViewMode = true;
         const projects = sub.projects || [];
 
@@ -1539,6 +1571,7 @@
         currentActiveLink = activeLink;
         galleryMode = true;
         catPhotoMode = false;
+        emptyState.classList.remove('show');
         stage.classList.add('gallery');
         bottomBar.style.opacity = '0';
         clearTimeout(galleryTimer);
