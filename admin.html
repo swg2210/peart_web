@@ -607,7 +607,7 @@
 // ────────────────────────────────────────────
 let adminPassword = '';
 let siteData = null;
-let cloudConfig = { cloudinaryCloud: '', cloudinaryPreset: '' };
+let cloudConfig = { imagekitEndpoint: '', imagekitPublicKey: '' };
 let selectedCatId  = null;
 let selectedSubId  = null;
 let pendingDeleteFn = null;
@@ -654,7 +654,7 @@ async function initApp() {
     return;
   }
 
-  // Cloudinary 설정 로드
+  // ImageKit 설정 로드
   try {
     const res = await fetch('/api/config');
     cloudConfig = await res.json();
@@ -719,7 +719,7 @@ function renderMainPhotosEditor() {
 }
 
 function mainPhotoCardHTML(src, index) {
-  const display = src.includes('cloudinary') ? src.replace('/upload/', '/upload/f_auto,q_auto,w_300/') : src;
+  const display = src.includes('ik.imagekit.io') ? src + (src.includes('?') ? '&' : '?') + 'tr=w-300' : src;
   return `<div class="photo-card" draggable="true"
     ondragstart="onMainPhotoDragStart(event,${index})"
     ondragover="onPhotoCardDragOver(event,this)"
@@ -771,7 +771,7 @@ async function uploadMainFiles(files) {
   for (let i = 0; i < files.length; i++) {
     progressEl.textContent = `업로드 중... ${i + 1} / ${files.length}`;
     try {
-      const url = await uploadToCloudinary(files[i]);
+      const url = await uploadToImageKit(files[i]);
       siteData.allPhotos.push(url);
     } catch (err) {
       progressEl.textContent = `오류: ${err.message}`;
@@ -1170,8 +1170,8 @@ function onFileSelectProject(e, catId, subId, pi) {
 
 async function uploadProjectFiles(files, catId, subId, pi) {
   const progress = document.getElementById(`upload-progress-proj-${pi}`);
-  if (!cloudConfig.cloudinaryCloud || !cloudConfig.cloudinaryPreset) {
-    alert('Cloudinary 환경변수가 설정되지 않았습니다.');
+  if (!cloudConfig.imagekitEndpoint || !cloudConfig.imagekitPublicKey) {
+    alert('ImageKit 환경변수가 설정되지 않았습니다.');
     return;
   }
   if (progress) progress.style.display = 'block';
@@ -1183,7 +1183,7 @@ async function uploadProjectFiles(files, catId, subId, pi) {
   for (let i = 0; i < files.length; i++) {
     if (progress) progress.textContent = `업로드 중... ${i + 1} / ${files.length}`;
     try {
-      const url = await uploadToCloudinary(files[i]);
+      const url = await uploadToImageKit(files[i]);
       proj.photos.push(url);
       if (!proj.coverPhoto) proj.coverPhoto = url;
       if (!siteData.allPhotos.includes(url)) siteData.allPhotos.push(url);
@@ -1301,12 +1301,12 @@ function onFileSelect(e, catId, subId) {
 }
 
 // ────────────────────────────────────────────
-// CLOUDINARY UPLOAD
+// IMAGEKIT UPLOAD
 // ────────────────────────────────────────────
 async function uploadFiles(files, catId, subId) {
   const progress = document.getElementById(`upload-progress-${subId}`);
-  if (!cloudConfig.cloudinaryCloud || !cloudConfig.cloudinaryPreset) {
-    alert('Cloudinary 환경변수가 설정되지 않았습니다.\nVercel에서 CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET을 설정하세요.');
+  if (!cloudConfig.imagekitEndpoint || !cloudConfig.imagekitPublicKey) {
+    alert('ImageKit 환경변수가 설정되지 않았습니다.\nVercel에서 IMAGEKIT_URL_ENDPOINT, IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY를 설정하세요.');
     return;
   }
 
@@ -1318,7 +1318,7 @@ async function uploadFiles(files, catId, subId) {
   for (let i = 0; i < files.length; i++) {
     progress.textContent = `업로드 중... ${i + 1} / ${files.length}`;
     try {
-      const url = await uploadToCloudinary(files[i]);
+      const url = await uploadToImageKit(files[i]);
       sub.photos.push(url);
       if (!siteData.allPhotos.includes(url)) siteData.allPhotos.push(url);
     } catch (e) {
@@ -1331,23 +1331,33 @@ async function uploadFiles(files, catId, subId) {
   renderSidebar();
 }
 
-async function uploadToCloudinary(file) {
+async function uploadToImageKit(file) {
+  // 서버에서 업로드 서명 토큰 발급
+  const authRes = await fetch('/api/imagekit-auth');
+  if (!authRes.ok) throw new Error('ImageKit 인증 토큰 발급 실패');
+  const auth = await authRes.json();
+
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('upload_preset', cloudConfig.cloudinaryPreset);
+  formData.append('fileName', file.name);
+  formData.append('publicKey', cloudConfig.imagekitPublicKey);
+  formData.append('signature', auth.signature);
+  formData.append('expire', auth.expire);
+  formData.append('token', auth.token);
+  formData.append('useUniqueFileName', 'true');
 
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudConfig.cloudinaryCloud}/image/upload`, {
+  const res = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
     method: 'POST',
     body: formData
   });
 
   if (!res.ok) {
     const err = await res.json();
-    throw new Error(err.error?.message || 'Cloudinary 오류');
+    throw new Error(err.message || 'ImageKit 오류');
   }
 
   const data = await res.json();
-  return data.secure_url;
+  return data.url;
 }
 
 // ────────────────────────────────────────────

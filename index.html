@@ -1015,13 +1015,12 @@
 
   <script>
     (async () => {
-      // ── Cloudinary 이미지 최적화 헬퍼 ──
+      // ── ImageKit 이미지 최적화 헬퍼 ──
       function optimizeImg(src, { w = 2000, q = 'auto', thumb = false } = {}) {
-        if (!src || !src.includes('res.cloudinary.com')) return src;
-        const params = thumb
-          ? 'f_auto,q_auto,w_600'
-          : `f_auto,q_${q},w_${w}`;
-        return src.replace('/upload/', `/upload/${params}/`);
+        if (!src || !src.includes('ik.imagekit.io')) return src;
+        const width = thumb ? 600 : w;
+        const tr = `tr=w-${width}`;
+        return src + (src.includes('?') ? '&' : '?') + tr;
       }
 
       // ── data.json 로드 ──
@@ -1039,7 +1038,7 @@
 
       // ── Shop 헬퍼 ──
       function getSrc(p)     { return typeof p === 'string' ? p : p.src; }
-      function isSellable(p) { return typeof p !== 'string' && p.sellable === true; }
+      function isSellable(p) { return !!p && typeof p === 'object' && p.sellable === true; }
       function getSizes(p) {
         if (typeof p === 'string') return [];
         return Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ['A3', 'A2'];
