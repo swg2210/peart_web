@@ -682,20 +682,24 @@ function renderMainPhotosEditor() {
   el.style.display = 'block';
 
   if (!siteData.allPhotos) siteData.allPhotos = [];
-  const photos = siteData.allPhotos;
+  // 카테고리에 등록된 사진은 메인 전용 목록에서 제외 (사이트 노출 기준과 동일)
+  const catSet = getCatPhotoSet();
+  const mainEntries = siteData.allPhotos
+    .map((src, i) => ({ src, i }))
+    .filter(e => !catSet.has(getPhotoSrc(e.src)));
 
   el.innerHTML = `
     <div class="section-header">
       <div>
         <h2>메인 사진 <span style="font-size:0.7rem;color:var(--text-dim);font-weight:300">홈 슬라이더</span></h2>
-        <div class="breadcrumb">첫 번째 사진이 인트로 커버로 사용됩니다</div>
+        <div class="breadcrumb">첫 번째 사진이 인트로 커버로 사용됩니다 · 카테고리에 올린 사진은 여기 표시되지 않습니다</div>
       </div>
     </div>
 
     <div class="divider"></div>
 
     <div class="photos-section">
-      <h3>사진 (${photos.length}장)</h3>
+      <h3>사진 (${mainEntries.length}장)</h3>
 
       <div class="upload-area" id="upload-area-main"
            onclick="document.getElementById('file-input-main').click()"
@@ -711,11 +715,26 @@ function renderMainPhotosEditor() {
       <div id="upload-progress-main" class="upload-progress" style="display:none"></div>
 
       <div class="photos-grid" id="photos-grid-main">
-        ${photos.map((src, i) => mainPhotoCardHTML(src, i)).join('')}
+        ${mainEntries.map(e => mainPhotoCardHTML(e.src, e.i)).join('')}
       </div>
 
-      ${photos.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">아직 사진이 없습니다.</p>` : ''}
+      ${mainEntries.length === 0 ? `<p style="font-size:0.78rem;color:var(--text-dim)">아직 메인 전용 사진이 없습니다.</p>` : ''}
     </div>`;
+}
+
+// 사진 항목에서 src 문자열 추출 (문자열 또는 {src} 객체 모두 지원)
+function getPhotoSrc(p) { return typeof p === 'string' ? p : (p && p.src) || ''; }
+
+// 모든 카테고리/프로젝트에 등록된 사진 src 집합
+function getCatPhotoSet() {
+  const set = new Set();
+  (siteData.categories || []).forEach(c => {
+    (c.subcategories || []).forEach(s => {
+      (s.photos || []).forEach(p => set.add(getPhotoSrc(p)));
+      (s.projects || []).forEach(pr => (pr.photos || []).forEach(p => set.add(getPhotoSrc(p))));
+    });
+  });
+  return set;
 }
 
 function mainPhotoCardHTML(src, index) {
@@ -1186,7 +1205,6 @@ async function uploadProjectFiles(files, catId, subId, pi) {
       const url = await uploadToImageKit(files[i]);
       proj.photos.push(url);
       if (!proj.coverPhoto) proj.coverPhoto = url;
-      if (!siteData.allPhotos.includes(url)) siteData.allPhotos.push(url);
     } catch (e) {
       alert(`업로드 실패: ${files[i].name}\n${e.message}`);
     }
@@ -1320,7 +1338,6 @@ async function uploadFiles(files, catId, subId) {
     try {
       const url = await uploadToImageKit(files[i]);
       sub.photos.push(url);
-      if (!siteData.allPhotos.includes(url)) siteData.allPhotos.push(url);
     } catch (e) {
       alert(`업로드 실패: ${files[i].name}\n${e.message}`);
     }
