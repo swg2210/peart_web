@@ -907,6 +907,27 @@
       opacity: 0.7;
     }
 
+    /* PC: 한/영을 가로 2단으로 배치 (모바일은 아래 미디어쿼리에서 기존 세로 유지) */
+    @media (min-width: 769px) {
+      #about-content {
+        max-width: 960px;
+      }
+      #about-content .about-columns {
+        display: flex;
+        gap: 56px;
+        align-items: flex-start;
+      }
+      #about-content .about-columns > * {
+        flex: 1;
+        min-width: 0;
+      }
+      #about-content .about-en {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+      }
+    }
+
     @media (max-width: 768px) {
       #about-content {
         padding: 20px 28px 60px;
@@ -981,6 +1002,8 @@
       <div class="shutter-blade bottom"></div>
     </div>
     <div id="about-content">
+      <div class="about-columns">
+      <div class="about-ko">
       <div class="about-headline">"평범한 하루가 예술이 되는 찰나"</div>
       <div class="about-body">
         <p>안녕하세요, 사진작가 김진호입니다.</p>
@@ -988,6 +1011,7 @@
         <p>제가 지향하는 사진은 강렬한 충격이나 영감을 강요하는 사진이 아닙니다. 대신, 보는 이의 마음에 잔잔한 여백을 남기는 사진이고 싶습니다. 문득 펼쳐보았을 때, "세상은 여전히 이렇게 평온하구나"라는 안도감을 줄 수 있는 그런 사진 말이죠.</p>
         <p>특별한 무언가를 포착하기보다, 보편적인 것들에서 발견하는 '느낌 좋은 순간'들을 믿습니다.</p>
         <p>제 사진이 당신의 공간에서 가장 편안한 휴식이 되길 바랍니다.</p>
+      </div>
       </div>
       <div class="about-en">
         <div class="about-headline">"The moment when an ordinary day becomes art"</div>
@@ -997,6 +1021,7 @@
           <p>The photography I aspire to is not about imposing intense shock or forced inspiration. Instead, I want my work to leave a quiet space in the viewer's heart. I hope that when someone happens upon my photos, they feel a sense of relief, thinking, "The world is still this peaceful."</p>
           <p>Rather than capturing something extraordinary, I believe in the 'good-feeling moments' found within the ordinary. I hope my photography becomes a place of comfortable rest in your space.</p>
         </div>
+      </div>
       </div>
       <div class="about-signature">
         김진호 — jinho.kim
