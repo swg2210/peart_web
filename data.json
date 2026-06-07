@@ -587,17 +587,17 @@
           "type": "split",
           "projects": [
             {
-              "name": "Wedding 01",
+              "name": "WEDDING DAY",
               "coverPhoto": "",
               "photos": []
             },
             {
-              "name": "Wedding 02",
+              "name": "WEDDING DAY - 2",
               "coverPhoto": "",
               "photos": []
             },
             {
-              "name": "Wedding 03",
+              "name": "JEJU WEDDING",
               "coverPhoto": "",
               "photos": []
             }
@@ -653,7 +653,8 @@
         {
           "id": "about",
           "name": "About",
-          "type": "about"
+          "type": "about",
+          "visible": true
         }
       ]
     }
