@@ -1076,14 +1076,8 @@
       });
       const allPhotos = rawAllPhotos.filter(p => !catPhotoSet.has(getSrc(p)));
 
-      // ── 포토 스테이지 구성 (intro-cover 첫 번째, 나머지 셔플) ──
-      const introPhoto = allPhotos[0];
-      const rest = allPhotos.slice(1);
-      for (let i = rest.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [rest[i], rest[j]] = [rest[j], rest[i]];
-      }
-      const mainOnly = [introPhoto, ...rest];
+      // ── 포토 스테이지 구성 (어드민에서 정한 순서 그대로, 첫 장이 인트로 커버) ──
+      const mainOnly = allPhotos.slice();
       const N = mainOnly.length;   // 메인 슬라이더 범위
 
       // 카테고리 사진도 stage에 포함 (포토모드에서 매칭용)
