@@ -641,8 +641,8 @@
       "subcategories": [
         {
           "id": "interior",
-          "name": "INTERIOR",
-          "title": "Interior",
+          "name": "Space",
+          "title": "Space",
           "subtitle": "",
           "type": "grid",
           "projects": [
@@ -676,10 +676,11 @@
               "coverPhoto": "",
               "photos": []
             }
-          ]
+          ],
+          "visible": true
         }
       ],
-      "visible": false
+      "visible": true
     },
     {
       "id": "about",
