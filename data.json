@@ -573,8 +573,9 @@
       ]
     },
     {
-      "id": "commercial",
-      "label": "Commercial",
+      "id": "wedding",
+      "label": "Wedding",
+      "direct": true,
       "subcategories": [
         {
           "id": "wedding",
@@ -600,8 +601,14 @@
             }
           ],
           "photos": [],
-          "visible": false
-        },
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "commercial",
+      "label": "Commercial",
+      "subcategories": [
         {
           "id": "interior",
           "name": "INTERIOR",

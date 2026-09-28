@@ -1040,29 +1040,69 @@ function renderSubEditor(catId, subId) {
 function renderSplitSubEditor(el, cat, sub, catId, subId) {
   if (!sub.projects) sub.projects = [];
   const projects = sub.projects;
-
+  const count = projects.reduce((sum, project) => sum + (project.photos || []).length, 0);
   el.innerHTML = `
     <div class="section-header">
-      <div>
-        <h2>${sub.name} <span style="font-size:0.7rem;color:var(--text-dim);font-weight:300">스플릿 뷰</span></h2>
-        <div class="breadcrumb">${cat.label} → 프로젝트 목록</div>
-      </div>
-      <button class="btn btn-sm btn-primary" onclick="openAddProjectModal('${catId}','${subId}')">+ 프로젝트 추가</button>
+      <div><h2>Wedding 사진 관리</h2><div class="breadcrumb">${count}장 · 촬영별로 추가하고 순서를 조절하세요.</div></div>
+      <button class="btn btn-sm btn-primary" onclick="openAddProjectModal('${catId}','${subId}')">+ 촬영 추가</button>
     </div>
-
     <div class="form-group">
-      <label>Nav 이름 <span style="color:var(--text-dim);font-size:0.65rem">(상단 메뉴에 표시)</span></label>
-      <input type="text" id="edit-sub-name" value="${sub.name}" autocomplete="off"
-        oninput="sub_update('${catId}','${subId}','name',this.value)">
+      <label>상단 메뉴 이름</label>
+      <input type="text" value="${escapeAdminText(cat.label)}" autocomplete="off"
+        oninput="cat_updateLabel('${catId}',this.value)">
     </div>
-
+    <p style="font-size:0.78rem;color:var(--text-dim);line-height:1.8;margin-bottom:16px">
+      사진은 원래 비율로 표시됩니다. 촬영 및 사진의 화살표로 순서를 조절할 수 있습니다.<br>
+      수정 후 상단 ‘저장하기’를 누르면 사이트에 반영됩니다.
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <a class="btn btn-sm" href="./#wedding" target="_blank" rel="noopener">저장된 Wedding 보기 ↗</a>
+      ${count === 0 ? `<button class="btn btn-sm" onclick="importWeddingPreview(this,'${catId}','${subId}')">시안 사진 24장 가져오기</button>` : ''}
+    </div>
+    ${count === 0 ? `<p style="font-size:0.75rem;color:var(--text-dim);margin-bottom:20px">시안 사진은 기존 포트폴리오 사진입니다. 가져오면 업로드한 사진처럼 수정·삭제할 수 있습니다.</p>` : ''}
     <div class="divider"></div>
+    <div id="projects-list">${projects.length === 0 ? '<p>촬영을 추가하고 사진을 업로드하세요.</p>' : projects.map((project,index) => projectRowHTML(project,index,catId,subId)).join('')}</div>`;
+}
 
-    <div id="projects-list">
-      ${projects.length === 0
-        ? `<p style="font-size:0.78rem;color:var(--text-dim);padding:20px 0">아직 등록된 프로젝트가 없습니다.</p>`
-        : projects.map((p, pi) => projectRowHTML(p, pi, catId, subId)).join('')}
-    </div>`;
+function escapeAdminText(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+
+async function importWeddingPreview(button, catId, subId) {
+  const sub = siteData.categories.find(c => c.id === catId)?.subcategories.find(s => s.id === subId);
+  if (!sub || (sub.projects || []).some(p => p.photos?.length)) return;
+  button.disabled = true;
+  try {
+    const response = await fetch('./wedding-preview.json');
+    if (!response.ok) throw new Error('시안 사진을 불러오지 못했습니다.');
+    const samples = await response.json();
+    if ((sub.projects || []).some(p => p.photos?.length)) return;
+    sub.projects = [{name:'포트폴리오 시안',coverPhoto:samples[0]?.src || '',photos:samples.map(p => p.src)}, ...(sub.projects || [])];
+    selectSub(catId,subId);
+    document.getElementById('project-expand-0').style.display = 'block';
+  } catch (error) { alert(error.message); }
+  finally { button.disabled = false; }
+}
+
+function moveProject(index, delta, catId, subId) {
+  const sub = siteData.categories.find(c => c.id === catId)?.subcategories.find(s => s.id === subId);
+  const target = index + delta;
+  if (!sub?.projects || target < 0 || target >= sub.projects.length) return;
+  const [project] = sub.projects.splice(index,1);
+  sub.projects.splice(target,0,project);
+  selectSub(catId,subId);
+  document.getElementById(`project-expand-${target}`).style.display = 'block';
+}
+
+function moveProjectPhoto(pi, index, delta, catId, subId) {
+  const project = siteData.categories.find(c => c.id === catId)?.subcategories.find(s => s.id === subId)?.projects?.[pi];
+  const target = index + delta;
+  if (!project || target < 0 || target >= project.photos.length) return;
+  const [photo] = project.photos.splice(index,1);
+  project.photos.splice(target,0,photo);
+  project.coverPhoto = getPhotoSrc(project.photos[0]);
+  const grid = document.querySelector(`#project-expand-${pi} .photos-grid`);
+  if (grid) grid.innerHTML = project.photos.map((src,si) => projectPhotoCardHTML(src,si,pi,catId,subId)).join('');
 }
 
 // ────────────────────────────────────────────
@@ -1100,8 +1140,10 @@ function projectRowHTML(p, pi, catId, subId) {
   return `
     <div class="sub-row" style="flex-direction:column;align-items:stretch;gap:12px;padding:16px">
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:0.88rem;font-weight:400">${p.name}</span>
+        <span style="font-size:0.88rem;font-weight:400">${escapeAdminText(p.name)}</span>
         <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" aria-label="촬영 위로 이동" ${pi === 0 ? 'disabled' : ''} onclick="moveProject(${pi},-1,'${catId}','${subId}')">↑</button>
+          <button class="btn btn-sm" aria-label="촬영 아래로 이동" ${pi === siteData.categories.find(c => c.id === catId).subcategories.find(s => s.id === subId).projects.length - 1 ? 'disabled' : ''} onclick="moveProject(${pi},1,'${catId}','${subId}')">↓</button>
           <button class="btn btn-sm" onclick="toggleProjectExpand(${pi},'${catId}','${subId}')">편집</button>
           <button class="btn btn-sm btn-danger" onclick="removeProject(${pi},'${catId}','${subId}')">삭제</button>
         </div>
@@ -1109,7 +1151,7 @@ function projectRowHTML(p, pi, catId, subId) {
       <div id="project-expand-${pi}" style="display:none">
         <div class="form-group" style="margin-bottom:12px">
           <label>프로젝트 이름</label>
-          <input type="text" value="${p.name}" autocomplete="off"
+          <input type="text" value="${escapeAdminText(p.name)}" autocomplete="off"
             oninput="updateProjectField(${pi},'${catId}','${subId}','name',this.value)">
         </div>
         <div class="photos-section" style="margin-top:0">
@@ -1134,9 +1176,15 @@ function projectRowHTML(p, pi, catId, subId) {
 }
 
 function projectPhotoCardHTML(src, si, pi, catId, subId) {
+  const project = siteData.categories.find(c => c.id === catId)?.subcategories.find(s => s.id === subId)?.projects?.[pi];
   return `<div class="photo-card">
-    <img src="${src}" loading="lazy" onerror="this.style.opacity=0.3">
-    <button class="photo-remove" onclick="removeProjectPhoto(${pi},${si},'${catId}','${subId}')">✕</button>
+    <img src="${escapeAdminText(getPhotoSrc(src))}" loading="lazy" onerror="this.style.opacity=0.3">
+    <button class="photo-remove" aria-label="사진 삭제" onclick="removeProjectPhoto(${pi},${si},'${catId}','${subId}')">✕</button>
+    <div style="position:absolute;bottom:4px;left:4px;right:4px;display:flex;justify-content:space-between;gap:4px">
+      <button class="btn btn-sm" aria-label="사진 앞으로 이동" ${si === 0 ? 'disabled' : ''} onclick="moveProjectPhoto(${pi},${si},-1,'${catId}','${subId}')">←</button>
+      <span style="background:#111b;color:white;padding:4px 8px;font-size:11px">${si+1}</span>
+      <button class="btn btn-sm" aria-label="사진 뒤로 이동" ${si === (project?.photos.length || 0)-1 ? 'disabled' : ''} onclick="moveProjectPhoto(${pi},${si},1,'${catId}','${subId}')">→</button>
+    </div>
   </div>`;
 }
 
@@ -1212,6 +1260,8 @@ async function uploadProjectFiles(files, catId, subId, pi) {
 
   if (progress) progress.style.display = 'none';
   selectSub(catId, subId);
+  const expanded = document.getElementById(`project-expand-${pi}`);
+  if (expanded) expanded.style.display = 'block';
 }
 
 // 프로젝트 추가 모달
@@ -1219,6 +1269,7 @@ let addProjectTarget = null;
 
 function openAddProjectModal(catId, subId) {
   addProjectTarget = { catId, subId };
+  document.getElementById('new-project-name').placeholder = catId === 'wedding' ? '예: 서울 본식, 제주 스냅' : '예: 성수동 카페';
   document.getElementById('new-project-name').value = '';
   openModal('modal-add-project');
   setTimeout(() => document.getElementById('new-project-name').focus(), 50);

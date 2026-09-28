@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;700&family=EB+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 
+  <link rel="stylesheet" href="./wedding-gallery.css">
+  <script src="./wedding-gallery.js"></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -979,15 +981,7 @@
     <div id="grid-mobile-gallery"></div>
   </div>
 
-  <div id="split-view">
-    <div id="split-main">
-      <img id="split-main-img" src="" alt="">
-    </div>
-    <div id="split-thumbs">
-      <div class="split-masonry" id="split-masonry"></div>
-    </div>
-    <div id="split-mobile-gallery"></div>
-  </div>
+  <section id="split-view" aria-label="Wedding 사진 갤러리"></section>
 
   <div id="project-detail">
     <div class="project-scroll" id="project-scroll"></div>
@@ -1179,7 +1173,7 @@
       counter.textContent = `01 / ${String(N).padStart(2, '0')}`;
       bottomBar.style.display = 'none';
       setTimeout(() => {
-        bottomBar.style.display = '';
+        bottomBar.style.display = splitViewMode ? 'none' : '';
         bottomBar.style.opacity = '0';
         bottomBar.style.transition = 'opacity 0.5s ease';
         requestAnimationFrame(() => { bottomBar.style.opacity = '1'; });
@@ -1219,7 +1213,7 @@
           if (sub.type === 'split') {
             const projects = sub.projects || [];
             const allPhotos = projects.flatMap(p => (p.photos || []).map(getSrc));
-            splitDataMap[sub.name] = { projects, allPhotos };
+            splitDataMap[sub.name] = { projects, allPhotos: allPhotos.length ? allPhotos : (sub.photos || []).map(getSrc) };
           }
         });
       });
@@ -1232,6 +1226,7 @@
         const li = document.createElement('li');
         li.className = 'nav-item';
         li.dataset.cat = cat.id;
+        if (cat.direct) li.classList.add('direct-category');
         const isAboutCat = visibleSubs.some(s => s.type === 'about');
         const hasSpecialType = visibleSubs.some(s => s.type === 'grid' || s.type === 'split');
         li.innerHTML = isAboutCat
@@ -1240,6 +1235,12 @@
           <ul class="sub-list${hasSpecialType ? ' horizontal' : ''}">
             ${visibleSubs.map(s => `<li><a href="#">${s.name}</a></li>`).join('')}
           </ul>`;
+        if (cat.direct) {
+          const label = li.querySelector('.nav-label');
+          const button = document.createElement('button');
+          button.type = 'button'; button.className = 'nav-label'; button.textContent = cat.label;
+          label.replaceWith(button);
+        }
         navList.appendChild(li);
       });
 
@@ -1390,89 +1391,23 @@
       let currentActiveLink = null;
       let galleryTimer = null;
 
-      // ── 스플릿 뷰 (Wedding) ──
-      const splitMobileGallery = document.getElementById('split-mobile-gallery');
-
+      // Wedding shares the existing split data/admin schema.
+      const weddingGallery = new WeddingGallery(splitView, optimizeImg);
       function openSplitView(subName) {
         const data = splitDataMap[subName];
-        if (!data || !data.projects.length) return;
+        if (!data) return;
         emptyState.classList.remove('show');
         splitViewMode = true;
-
-        if (isMobile()) {
-          // 모바일: 가로 스크롤 포스터 뷰
-          splitMobileGallery.innerHTML = data.projects.map((proj, i) => `
-            <div class="split-poster" data-project-idx="${i}">
-              <img src="${optimizeImg(proj.coverPhoto)}" alt="${proj.name}" loading="lazy">
-              <div class="split-poster-name">${proj.name}</div>
-            </div>`).join('');
-
-          // 포스터 클릭 → 줌인 트랜지션 → 프로젝트 상세
-          splitMobileGallery.querySelectorAll('.split-poster').forEach(poster => {
-            poster.addEventListener('click', () => {
-              const idx = parseInt(poster.dataset.projectIdx);
-              projectDetail.classList.add('zoom-enter');
-              openProjectDetail(data.projects[idx]);
-              projectDetail.addEventListener('animationend', () => {
-                projectDetail.classList.remove('zoom-enter');
-              }, { once: true });
-            });
-          });
-
-          splitView.classList.add('open');
-          bottomBar.style.display = 'none';
-
-        } else {
-          // PC: 기존 split 뷰 (allPhotos 사용)
-          const photoSet = data.allPhotos;
-          if (!photoSet.length) return;
-
-          splitMasonry.innerHTML = photoSet.map((src, i) => `
-            <div class="split-thumb${i === 0 ? ' active' : ''}" data-src="${src}">
-              <img data-lazy="${optimizeImg(src, { thumb: true })}" alt="">
-            </div>`).join('');
-
-          splitMainImg.src = optimizeImg(photoSet[0]);
-
-          const splitThumbsEl = document.getElementById('split-thumbs');
-          const splitObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                const img = entry.target;
-                if (img.dataset.lazy) {
-                  img.src = img.dataset.lazy;
-                  delete img.dataset.lazy;
-                }
-                splitObserver.unobserve(img);
-              }
-            });
-          }, { root: splitThumbsEl, rootMargin: '200px 0px' });
-
-          splitMasonry.querySelectorAll('.split-thumb img').forEach(img => {
-            splitObserver.observe(img);
-          });
-
-          splitMasonry.querySelectorAll('.split-thumb').forEach(thumb => {
-            thumb.addEventListener('click', () => {
-              splitMasonry.querySelectorAll('.split-thumb').forEach(t => t.classList.remove('active'));
-              thumb.classList.add('active');
-              splitMainImg.style.opacity = '0';
-              setTimeout(() => {
-                splitMainImg.src = optimizeImg(thumb.dataset.src);
-                splitMainImg.style.opacity = '1';
-              }, 150);
-            });
-          });
-
-          splitView.classList.add('open');
-          bottomBar.style.display = 'none';
-        }
+        document.body.classList.add('wedding-open');
+        splitView.classList.add('open');
+        bottomBar.style.display = 'none';
+        weddingGallery.open(data, new URLSearchParams(location.search).get('preview') === 'wedding');
       }
-
       function closeSplitView() {
         splitViewMode = false;
+        document.body.classList.remove('wedding-open');
         splitView.classList.remove('open');
-        splitMobileGallery.innerHTML = '';
+        weddingGallery.close();
         bottomBar.style.display = '';
       }
 
@@ -1684,6 +1619,15 @@
           }
           if (splitViewMode) closeSplitView();
           if (gridViewMode) closeGridView();
+
+          if (categories.find(c => c.id === cat)?.direct) {
+            navItems.forEach(i => i.classList.remove('open'));
+            item.classList.add('open');
+            mobileSubBar.classList.remove('open');
+            exitGallery();
+            openSplitView(subDataMap[cat][0]);
+            return;
+          }
 
           if (isMobile()) {
             // 상세 뷰에서 돌아온 경우는 같은 카테고리여도 다시 열기
@@ -1997,6 +1941,9 @@
         posterSubmitBtn.textContent = 'Submit';
       });
 
+      if (new URLSearchParams(location.search).get('preview') === 'wedding' || location.hash === '#wedding') {
+        document.querySelector('[data-cat="wedding"] .nav-label')?.click();
+      }
     })();
 
     // ── 캡처 방지: 우클릭 + 단축키 ──
