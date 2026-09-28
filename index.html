@@ -362,6 +362,13 @@
       scrollbar-width: none;
     }
 
+    .project-photo-button { display:block; flex:0 0 auto; height:100%; padding:0; border:0; background:transparent; cursor:zoom-in; }
+    .project-photo-button:focus-visible { outline:2px solid #555; outline-offset:4px; }
+    #project-lightbox { border:0; background:#191918; color:white; width:100vw; max-width:none; height:100dvh; max-height:none; padding:64px 24px 24px; }
+    #project-lightbox::backdrop { background:#191918; }
+    #project-lightbox img { width:100%; height:100%; object-fit:contain; }
+    #project-lightbox button { position:absolute; top:12px; right:18px; border:0; background:none; color:white; width:44px; height:44px; font-size:26px; cursor:pointer; }
+
     .project-scroll::-webkit-scrollbar { display: none; }
 
     .project-scroll img {
@@ -897,6 +904,11 @@
     <div id="project-detail-info"></div>
   </div>
 
+  <dialog id="project-lightbox" aria-label="공간 사진 전체 화면">
+    <button type="button" aria-label="전체 화면 닫기">×</button>
+    <img alt="">
+  </dialog>
+
   <!-- About ���터 인트로 + 콘텐츠 -->
   <div id="about-overlay">
     <div id="about-photo-intro">
@@ -1291,6 +1303,17 @@
       const projectDetail = document.getElementById('project-detail');
       const projectScroll = document.getElementById('project-scroll');
       const projectDetailInfo = document.getElementById('project-detail-info');
+      const projectLightbox = document.getElementById('project-lightbox');
+      projectLightbox.querySelector('button').addEventListener('click', () => projectLightbox.close());
+      projectScroll.addEventListener('click', event => {
+        const button = event.target.closest('.project-photo-button');
+        if (!button) return;
+        const source = button.querySelector('img');
+        const fullImage = projectLightbox.querySelector('img');
+        fullImage.src = source.src;
+        fullImage.alt = source.alt;
+        projectLightbox.showModal();
+      });
       const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
       let galleryMode = false;
@@ -1371,9 +1394,15 @@
         const photos = (project.photos || []).map(getSrc);
         projectPhotoCount = photos.length;
         projectCurrentIdx = 0;
-        projectScroll.innerHTML = photos.map(src =>
-          `<img src="${optimizeImg(src)}" alt="" loading="lazy">`
-        ).join('');
+        projectScroll.replaceChildren();
+        photos.forEach((src, index) => {
+          const button = document.createElement('button');
+          button.type = 'button'; button.className = 'project-photo-button';
+          button.setAttribute('aria-label', `사진 ${index + 1} 전체 화면으로 보기`);
+          const img = document.createElement('img');
+          img.src = optimizeImg(src); img.alt = `${project.name} · 사진 ${index + 1}`; img.loading = 'lazy';
+          button.append(img); projectScroll.append(button);
+        });
         projectDetail.classList.add('open');
         history.pushState({ view: 'projectDetail' }, '');
         // 기존 counter UI 활용
@@ -1402,6 +1431,7 @@
       }
 
       function closeProjectDetail() {
+        if (projectLightbox.open) projectLightbox.close();
         projectDetailMode = false;
         projectDetail.classList.remove('open');
         projectScroll.innerHTML = '';
@@ -1620,6 +1650,7 @@
       });
 
       window.addEventListener('wheel', e => {
+        if (projectLightbox.open) { e.preventDefault(); return; }
         if (projectDetailMode) {
           // 상하 스크롤 → 가로 스크롤 변환 (deltaX가 있으면 트랙패드 좌우 → 그대로)
           if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -1636,6 +1667,7 @@
       }, { passive: false });
 
       window.addEventListener('keydown', e => {
+        if (projectLightbox.open) return;
         if (projectDetailMode) {
           if (e.key === 'ArrowRight') projectScroll.scrollLeft += 300;
           if (e.key === 'ArrowLeft') projectScroll.scrollLeft -= 300;
