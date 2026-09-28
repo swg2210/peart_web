@@ -904,7 +904,7 @@
     <div id="project-detail-info"></div>
   </div>
 
-  <dialog id="project-lightbox" aria-label="공간 사진 전체 화면">
+  <dialog id="project-lightbox" aria-label="사진 전체 화면">
     <button type="button" aria-label="전체 화면 닫기">×</button>
     <img alt="">
   </dialog>
@@ -1137,6 +1137,15 @@
             splitDataMap[sub.name] = { projects, allPhotos: allPhotos.length ? allPhotos : (sub.photos || []).map(getSrc) };
           }
         });
+        // Keep Personal albums in their original admin schema; present them as projects.
+        if (cat.layout === 'grid') {
+          gridDataMap[cat.id] = {
+            projects: visibleSubs.map(sub => ({
+              ...sub,
+              coverPhoto: sub.coverPhoto || getSrc((sub.photos || [])[0] || '')
+            }))
+          };
+        }
       });
 
       // ── Nav 동적 생성 ──
@@ -1356,7 +1365,7 @@
         gridContainer.replaceChildren();
         if (!projects.length) {
           const empty = document.createElement('p');
-          empty.className = 'grid-empty'; empty.textContent = '공간 사진을 준비하고 있습니다.';
+          empty.className = 'grid-empty'; empty.textContent = '사진을 준비하고 있습니다.';
           gridContainer.append(empty);
         }
         projects.forEach(project => {
@@ -1865,6 +1874,7 @@
         posterSubmitBtn.textContent = 'Submit';
       });
 
+      if (location.hash === '#personal') document.querySelector('[data-cat="personal"] .nav-label')?.click();
       if (location.hash === '#space') document.querySelector('[data-cat="space"] .nav-label')?.click();
       if (new URLSearchParams(location.search).get('preview') === 'wedding' || location.hash === '#wedding') {
         document.querySelector('[data-cat="wedding"] .nav-label')?.click();

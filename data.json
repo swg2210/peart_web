@@ -570,7 +570,9 @@
             "https://ik.imagekit.io/swg2210/제목_없음-2_8LEmzsYS_.jpg"
           ]
         }
-      ]
+      ],
+      "direct": true,
+      "layout": "grid"
     },
     {
       "id": "wedding",
