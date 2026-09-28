@@ -318,115 +318,24 @@
       #gallery-title .g-sub  { white-space: nowrap; }
     }
 
-    /* ── GRID VIEW (Interior) ── */
-    #grid-view {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: #fff;
-      z-index: 80;
-      overflow-y: auto;
-      padding: 100px 36px 60px;
-    }
-
-    #grid-view.open { display: block; }
-
-    .grid-container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 32px 24px;
-    }
-
-    .grid-item {
-      cursor: pointer;
-    }
-
-    .grid-item-thumb {
-      width: 100%;
-      aspect-ratio: 3 / 2;
-      overflow: hidden;
-      background: #f0f0f0;
-      margin-bottom: 10px;
-    }
-
-    .grid-item-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: opacity 0.2s;
-    }
-
-    .grid-item:hover .grid-item-thumb img { opacity: 0.85; }
-
-    .grid-item-name {
-      font-size: 0.8rem;
-      font-weight: 300;
-      color: #111;
-      letter-spacing: 0.01em;
-    }
-
-    .grid-empty {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 80px 0;
-      font-size: 0.8rem;
-      color: #aaa;
-    }
-
-    #grid-mobile-gallery { display: none; }
-
-    @media (max-width: 768px) {
-      /* 모바일: PC 그리드 숨기고 가로 스크롤 포스터 */
-      #grid-view { padding: 0; overflow: hidden; }
-      .grid-container { display: none; }
-
-      #grid-view.open #grid-mobile-gallery {
-        display: flex;
-        flex-direction: row;
-        position: absolute;
-        inset: 0;
-        padding: 0 20px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        gap: 10px;
-        align-items: center;
-      }
-      #grid-view.open #grid-mobile-gallery::-webkit-scrollbar { display: none; }
-
-      .grid-poster {
-        flex: 0 0 auto;
-        height: 50vh;
-        scroll-snap-align: center;
-        position: relative;
-        cursor: pointer;
-        overflow: hidden;
-      }
-
-      .grid-poster img {
-        height: 100%;
-        width: auto;
-        object-fit: contain;
-        transition: opacity 0.15s;
-      }
-
-      .grid-poster:active img { opacity: 0.8; }
-
-      .grid-poster-name {
-        position: absolute;
-        bottom: 16px;
-        left: 16px;
-        font-size: 0.65rem;
-        letter-spacing: 0.05em;
-        color: #fff;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.5);
-      }
-    }
-
-    @media (min-width: 769px) {
-      #grid-mobile-gallery { display: none !important; }
+    /* Space — project index, existing horizontal detail view. */
+    body.space-open #site-header { background: #fff; }
+    #grid-view { display:none; position:fixed; inset:0; background:#fff; z-index:80; overflow-y:auto; padding:122px 36px 60px; }
+    #grid-view.open { display:block; }
+    .grid-container { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:44px 28px; }
+    .grid-item { display:block; width:100%; border:0; padding:0; background:none; text-align:left; color:#111; font:inherit; cursor:pointer; }
+    .grid-item:focus-visible { outline:2px solid #555; outline-offset:6px; }
+    .grid-item-thumb { width:100%; aspect-ratio:3/2; overflow:hidden; background:#f4f4f4; margin-bottom:14px; }
+    .grid-item-thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:opacity .2s; }
+    .grid-item:hover .grid-item-thumb img { opacity:.9; }
+    .grid-item-name { font-size:14px; font-weight:300; letter-spacing:.01em; }
+    .grid-empty { grid-column:1/-1; text-align:center; padding:80px 0; font-size:13px; color:#888; }
+    #grid-mobile-gallery { display:none !important; }
+    @media(max-width:768px) {
+      #grid-view { padding:110px 20px 40px; }
+      .grid-container { grid-template-columns:1fr; gap:28px; }
+      .grid-item-thumb { margin-bottom:10px; }
+      .grid-item-name { font-size:13px; }
     }
 
     /* ── PROJECT DETAIL VIEW (Interior 프로젝트 가로 스크롤) ── */
@@ -1173,7 +1082,7 @@
       counter.textContent = `01 / ${String(N).padStart(2, '0')}`;
       bottomBar.style.display = 'none';
       setTimeout(() => {
-        bottomBar.style.display = splitViewMode ? 'none' : '';
+        bottomBar.style.display = splitViewMode || (gridViewMode && !projectDetailMode) || aboutMode ? 'none' : '';
         bottomBar.style.opacity = '0';
         bottomBar.style.transition = 'opacity 0.5s ease';
         requestAnimationFrame(() => { bottomBar.style.opacity = '1'; });
@@ -1419,53 +1328,35 @@
         if (!sub) return;
         emptyState.classList.remove('show');
         gridViewMode = true;
-        const projects = sub.projects || [];
-
-        if (isMobile()) {
-          // 모바일: 가로 스크롤 포스터 (웨딩과 동일)
-          gridMobileGallery.innerHTML = projects.length === 0
-            ? ''
-            : projects.map((p, i) => `
-              <div class="grid-poster" data-project-idx="${i}">
-                <img src="${optimizeImg(p.coverPhoto)}" alt="${p.name}" loading="lazy">
-                <div class="grid-poster-name">${p.name}</div>
-              </div>`).join('');
-
-          gridMobileGallery.querySelectorAll('.grid-poster').forEach(poster => {
-            poster.addEventListener('click', () => {
-              const idx = parseInt(poster.dataset.projectIdx);
-              projectDetail.classList.add('zoom-enter');
-              openProjectDetail(projects[idx]);
-              projectDetail.addEventListener('animationend', () => {
-                projectDetail.classList.remove('zoom-enter');
-              }, { once: true });
-            });
-          });
-
-        } else {
-          // PC: 기존 그리드 뷰
-          gridContainer.innerHTML = projects.length === 0
-            ? `<div class="grid-empty">아직 등록된 프로젝트가 없습니다.</div>`
-            : projects.map(p => `
-                <div class="grid-item">
-                  <div class="grid-item-thumb">
-                    ${p.coverPhoto ? `<img src="${optimizeImg(p.coverPhoto, { thumb: true })}" alt="${p.name}" loading="lazy">` : ''}
-                  </div>
-                  <div class="grid-item-name">${p.name}</div>
-                </div>`).join('');
-
-          gridContainer.querySelectorAll('.grid-item').forEach((item, i) => {
-            item.addEventListener('click', () => {
-              if (projects[i]) openProjectDetail(projects[i]);
-            });
-          });
+        document.body.classList.add('space-open');
+        const projects = (sub.projects || []).filter(p => (p.photos || []).some(photo => getSrc(photo)));
+        gridContainer.replaceChildren();
+        if (!projects.length) {
+          const empty = document.createElement('p');
+          empty.className = 'grid-empty'; empty.textContent = '공간 사진을 준비하고 있습니다.';
+          gridContainer.append(empty);
         }
-
+        projects.forEach(project => {
+          const item = document.createElement('button');
+          item.type = 'button'; item.className = 'grid-item';
+          item.setAttribute('aria-label', project.name + ' 사진 보기');
+          const thumb = document.createElement('div'); thumb.className = 'grid-item-thumb';
+          const img = document.createElement('img');
+          img.src = optimizeImg(getSrc(project.coverPhoto || project.photos[0]), {w:1200});
+          img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+          img.addEventListener('error', () => { img.hidden = true; thumb.textContent = '사진을 불러올 수 없습니다'; }, {once:true});
+          thumb.append(img);
+          const label = document.createElement('div'); label.className = 'grid-item-name'; label.textContent = project.name;
+          item.append(thumb,label);
+          item.addEventListener('click', () => openProjectDetail(project));
+          gridContainer.append(item);
+        });
         gridView.classList.add('open');
         bottomBar.style.display = 'none';
       }
 
       function closeGridView() {
+        document.body.classList.remove('space-open');
         gridViewMode = false;
         gridView.classList.remove('open');
         gridMobileGallery.innerHTML = '';
@@ -1625,7 +1516,8 @@
             item.classList.add('open');
             mobileSubBar.classList.remove('open');
             exitGallery();
-            openSplitView(subDataMap[cat][0]);
+            if (gridDataMap[cat]) openGridView(cat);
+            else openSplitView(subDataMap[cat][0]);
             return;
           }
 
@@ -1941,6 +1833,7 @@
         posterSubmitBtn.textContent = 'Submit';
       });
 
+      if (location.hash === '#space') document.querySelector('[data-cat="space"] .nav-label')?.click();
       if (new URLSearchParams(location.search).get('preview') === 'wedding' || location.hash === '#wedding') {
         document.querySelector('[data-cat="wedding"] .nav-label')?.click();
       }

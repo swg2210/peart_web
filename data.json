@@ -636,8 +636,10 @@
       ]
     },
     {
-      "id": "commercial",
-      "label": "Commercial",
+      "id": "space",
+      "label": "Space",
+      "direct": true,
+      "visible": true,
       "subcategories": [
         {
           "id": "interior",
@@ -679,8 +681,7 @@
           ],
           "visible": true
         }
-      ],
-      "visible": true
+      ]
     },
     {
       "id": "about",

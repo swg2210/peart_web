@@ -1123,8 +1123,8 @@ function renderGridSubEditor(el, cat, sub, catId, subId) {
 
     <div class="form-group">
       <label>Nav 이름 <span style="color:var(--text-dim);font-size:0.65rem">(상단 메뉴에 표시)</span></label>
-      <input type="text" id="edit-sub-name" value="${sub.name}" autocomplete="off"
-        oninput="sub_update('${catId}','${subId}','name',this.value)">
+      <input type="text" id="edit-sub-name" value="${escapeAdminText(cat.direct ? cat.label : sub.name)}" autocomplete="off"
+        oninput="${cat.direct ? `cat_updateLabel('${catId}',this.value)` : `sub_update('${catId}','${subId}','name',this.value)`}">
     </div>
 
     <div class="divider"></div>
