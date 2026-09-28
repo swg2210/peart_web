@@ -367,6 +367,12 @@
     #project-lightbox { border:0; background:#191918; color:white; width:100vw; max-width:none; height:100dvh; max-height:none; padding:64px 24px 24px; }
     #project-lightbox::backdrop { background:#191918; }
     #project-lightbox img { width:100%; height:100%; object-fit:contain; }
+    #project-lightbox .lightbox-prev { left:12px; right:auto; top:50%; transform:translateY(-50%); background:#19191899; border-radius:50%; }
+    #project-lightbox .lightbox-next { right:12px; top:50%; transform:translateY(-50%); background:#19191899; border-radius:50%; }
+    #project-lightbox button:disabled { opacity:.2; cursor:default; }
+    #project-lightbox button:focus-visible { outline:2px solid white; outline-offset:3px; }
+    #project-lightbox .lightbox-count { position:absolute; left:24px; top:26px; font-size:12px; color:#ccc; font-variant-numeric:tabular-nums; }
+    #project-lightbox { touch-action:pan-y pinch-zoom; }
     #project-lightbox button { position:absolute; top:12px; right:18px; border:0; background:none; color:white; width:44px; height:44px; font-size:26px; cursor:pointer; }
 
     .project-scroll::-webkit-scrollbar { display: none; }
@@ -905,8 +911,11 @@
   </div>
 
   <dialog id="project-lightbox" aria-label="사진 전체 화면">
-    <button type="button" aria-label="전체 화면 닫기">×</button>
+    <button type="button" class="lightbox-close" aria-label="전체 화면 닫기">×</button>
+    <span class="lightbox-count" aria-live="polite" aria-atomic="true"></span>
     <img alt="">
+    <button type="button" class="lightbox-prev" aria-label="이전 사진">‹</button>
+    <button type="button" class="lightbox-next" aria-label="다음 사진">›</button>
   </dialog>
 
   <!-- About ���터 인트로 + 콘텐츠 -->
@@ -1313,14 +1322,68 @@
       const projectScroll = document.getElementById('project-scroll');
       const projectDetailInfo = document.getElementById('project-detail-info');
       const projectLightbox = document.getElementById('project-lightbox');
-      projectLightbox.querySelector('button').addEventListener('click', () => projectLightbox.close());
-      projectScroll.addEventListener('click', event => {
-        const button = event.target.closest('.project-photo-button');
-        if (!button) return;
-        const source = button.querySelector('img');
+      let lightboxIndex = 0;
+      let lightboxPhotos = [];
+      const lightboxPrevious = projectLightbox.querySelector('.lightbox-prev');
+      const lightboxNext = projectLightbox.querySelector('.lightbox-next');
+      function showLightboxPhoto(index) {
+        if (index < 0 || index >= lightboxPhotos.length) return;
+        lightboxIndex = index;
+        const source = lightboxPhotos[index];
         const fullImage = projectLightbox.querySelector('img');
         fullImage.src = source.src;
         fullImage.alt = source.alt;
+        projectLightbox.querySelector('.lightbox-count').textContent = `${index + 1} / ${lightboxPhotos.length}`;
+        lightboxPrevious.disabled = index === 0;
+        lightboxNext.disabled = index === lightboxPhotos.length - 1;
+      }
+      projectLightbox.querySelector('.lightbox-close').addEventListener('click', () => projectLightbox.close());
+      lightboxPrevious.addEventListener('click', () => showLightboxPhoto(lightboxIndex - 1));
+      lightboxNext.addEventListener('click', () => showLightboxPhoto(lightboxIndex + 1));
+      projectLightbox.addEventListener('keydown', event => {
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+          event.preventDefault(); event.stopPropagation();
+          showLightboxPhoto(lightboxIndex + (event.key === 'ArrowRight' ? 1 : -1));
+        }
+      });
+      let swipeStart = null;
+      projectLightbox.addEventListener('touchstart', event => {
+        swipeStart = event.touches.length === 1 ? {x:event.touches[0].clientX,y:event.touches[0].clientY} : null;
+      }, {passive:true});
+      projectLightbox.addEventListener('touchmove', event => {
+        if (event.touches.length !== 1) swipeStart = null;
+      }, {passive:true});
+      projectLightbox.addEventListener('touchend', event => {
+        if (!swipeStart || !event.changedTouches.length) return;
+        const dx = event.changedTouches[0].clientX - swipeStart.x;
+        const dy = event.changedTouches[0].clientY - swipeStart.y;
+        swipeStart = null;
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.25) showLightboxPhoto(lightboxIndex + (dx < 0 ? 1 : -1));
+      }, {passive:true});
+      projectLightbox.addEventListener('touchcancel', () => { swipeStart = null; });
+      let wheelDistance = 0, wheelTime = 0, wheelLastEvent = 0;
+      projectLightbox.addEventListener('wheel', event => {
+        event.preventDefault(); event.stopPropagation();
+        const now = Date.now();
+        if (Math.abs(event.deltaX) <= Math.abs(event.deltaY) || now - wheelTime < 350) return;
+        if (now - wheelLastEvent > 180) wheelDistance = 0;
+        wheelLastEvent = now;
+        wheelDistance += event.deltaX;
+        if (Math.abs(wheelDistance) > 60) {
+          showLightboxPhoto(lightboxIndex + (wheelDistance > 0 ? 1 : -1));
+          wheelDistance = 0; wheelTime = now;
+        }
+      }, {passive:false});
+      projectLightbox.addEventListener('close', () => {
+        if (projectDetailMode) lightboxPhotos[lightboxIndex]?.closest('button')?.scrollIntoView({block:'nearest',inline:'center'});
+        lightboxPhotos = []; swipeStart = null;
+      });
+      projectScroll.addEventListener('click', event => {
+        const button = event.target.closest('.project-photo-button');
+        if (!button) return;
+        lightboxPhotos = Array.from(projectScroll.querySelectorAll('.project-photo-button img'));
+        showLightboxPhoto(lightboxPhotos.indexOf(button.querySelector('img')));
+        wheelDistance = 0; wheelTime = 0; wheelLastEvent = 0;
         projectLightbox.showModal();
       });
       const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
