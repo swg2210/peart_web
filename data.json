@@ -650,33 +650,57 @@
           "projects": [
             {
               "name": "Project 01",
-              "coverPhoto": "",
-              "photos": []
+              "coverPhoto": "./images/wedding-preview/DSC02546.jpg",
+              "photos": [
+                "./images/wedding-preview/DSC02546.jpg",
+                "./images/wedding-preview/DSC02216.jpg",
+                "./images/wedding-preview/22FA7B59-0450-4CCA-9E02-85496CA06066.jpg"
+              ]
             },
             {
               "name": "Project 02",
-              "coverPhoto": "",
-              "photos": []
+              "coverPhoto": "./images/wedding-preview/DSC02393.jpg",
+              "photos": [
+                "./images/wedding-preview/DSC02393.jpg",
+                "./images/wedding-preview/6D55E0DF-18FB-427A-A7F1-496689AD6CE8.jpg",
+                "./images/wedding-preview/88F17B32-5C41-4B35-AAE7-870BCC81E98D.jpg"
+              ]
             },
             {
               "name": "Project 03",
-              "coverPhoto": "",
-              "photos": []
+              "coverPhoto": "./images/wedding-preview/DSC00767.jpg",
+              "photos": [
+                "./images/wedding-preview/DSC00767.jpg",
+                "./images/wedding-preview/DSC01006.jpg",
+                "./images/wedding-preview/DSC01018.jpg"
+              ]
             },
             {
               "name": "Project 04",
-              "coverPhoto": "",
-              "photos": []
+              "coverPhoto": "./images/wedding-preview/DSC01256.jpg",
+              "photos": [
+                "./images/wedding-preview/DSC01256.jpg",
+                "./images/wedding-preview/DSC01334.jpg",
+                "./images/wedding-preview/DSC01339.jpg"
+              ]
             },
             {
               "name": "Project 05",
-              "coverPhoto": "",
-              "photos": []
+              "coverPhoto": "./images/wedding-preview/DSC01957.jpg",
+              "photos": [
+                "./images/wedding-preview/DSC01957.jpg",
+                "./images/wedding-preview/395577AD-ABA3-4C88-9E13-B53F79D32834.jpg",
+                "./images/wedding-preview/DSC02414.jpg"
+              ]
             },
             {
               "name": "Project 06",
-              "coverPhoto": "",
-              "photos": []
+              "coverPhoto": "./images/wedding-preview/DSC02729.jpg",
+              "photos": [
+                "./images/wedding-preview/DSC02729.jpg",
+                "./images/wedding-preview/DSC03327.jpg",
+                "./images/wedding-preview/DSC03336.jpg"
+              ]
             }
           ],
           "visible": true
