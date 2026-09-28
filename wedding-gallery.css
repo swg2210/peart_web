@@ -23,7 +23,7 @@ button.nav-label { border: 0; background: none; font: inherit; font-size: .8125r
 .wg-focus-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
 .wg-focus-bar button, .wg-focus-footer button { background: none; border: 0; font-size: 11px; padding: 10px 4px; min-height: 40px; }
 .wg-focus-actions { display: flex; gap: 12px; }
-.wg-focus-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: #efeee9; border-radius: 3px; position: relative; }
+.wedding-gallery .wg-focus-stage { border: 0; padding: 0; width: 100%; cursor: zoom-in; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: #efeee9; border-radius: 3px; position: relative; }
 .wg-focus-stage img { width: 100%; height: 100%; object-fit: contain; }
 .wg-focus-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 12px; font-size: 11px; }
 .wg-focus-footer p { color: #777267; font-size: 10px; margin-top: 5px; }
@@ -45,7 +45,7 @@ button.nav-label { border: 0; background: none; font: inherit; font-size: .8125r
   .wg-content { display: block; overflow-y: auto; overscroll-behavior: contain; }
   .wg-feed { overflow: visible; padding: 3px 3px 30px; }
   .wg-focus { padding: 0 3px 24px; }
-  .wg-focus-stage { flex: none; height: 48dvh; }
+  .wedding-gallery .wg-focus-stage { flex: none; height: 48dvh; }
   .wg-focus-footer { padding-top: 6px; }
   .wg-dialog { padding: 64px 12px; }
 }

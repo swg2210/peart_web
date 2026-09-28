@@ -19,7 +19,7 @@ class WeddingGallery {
               <button type="button" data-action="expand" aria-label="사진 전체 화면">⤢</button>
             </div>
           </div>
-          <div class="wg-focus-stage"><img alt=""></div>
+          <button type="button" class="wg-focus-stage" data-action="expand" aria-label="선택한 사진 전체 화면으로 보기" title="클릭하여 전체 화면으로 보기"><img alt=""></button>
           <div class="wg-focus-footer"><div><span class="wg-project"></span><p class="wg-position"></p></div><button type="button" data-action="project">이 촬영 더 보기 ↗</button></div>
         </aside>
         <div class="wg-feed"><div class="wg-grid"></div><div class="wg-empty" hidden><strong>Wedding</strong>웨딩 사진을 준비하고 있습니다.<br><a href="?preview=wedding">갤러리 레이아웃 미리보기 ↗</a></div></div>
