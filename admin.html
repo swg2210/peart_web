@@ -125,6 +125,8 @@
       cursor: pointer;
       border-radius: 4px;
     }
+    .btn-icon:disabled { opacity: .25; cursor: default; }
+    .btn-icon:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
     .btn-icon:hover { background: var(--surface2); color: var(--text); }
 
     /* ── LAYOUT ── */
@@ -209,7 +211,7 @@
       font-weight: 400;
     }
 
-    .cat-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.1s; }
+    .cat-actions { display: flex; gap: 2px; opacity: 1; transition: opacity 0.1s; }
     .cat-header:hover .cat-actions { opacity: 1; }
 
     .sub-item {
@@ -816,7 +818,7 @@ function renderSidebar() {
     </div>`;
   container.appendChild(mainItem);
 
-  siteData.categories.forEach(cat => {
+  siteData.categories.forEach((cat, catIndex) => {
     const group = document.createElement('div');
     group.className = 'cat-group';
     group.innerHTML = `
@@ -824,6 +826,8 @@ function renderSidebar() {
            onclick="selectCat('${cat.id}')">
         <span class="cat-name">${cat.label}</span>
         <div class="cat-actions">
+          <button type="button" class="btn-icon" title="카테고리 위로" aria-label="${escapeAdminText(cat.label)} 위로 이동" ${catIndex === 0 ? 'disabled' : ''} onclick="event.stopPropagation();moveCategory('${cat.id}',-1)">↑</button>
+          <button type="button" class="btn-icon" title="카테고리 아래로" aria-label="${escapeAdminText(cat.label)} 아래로 이동" ${catIndex === siteData.categories.length - 1 ? 'disabled' : ''} onclick="event.stopPropagation();moveCategory('${cat.id}',1)">↓</button>
           <label class="vis-toggle" title="표시/숨김" onclick="event.stopPropagation()">
             <input type="checkbox" ${cat.visible !== false ? 'checked' : ''} onchange="toggleCatVisible('${cat.id}',this.checked)">
             <span class="slider"></span>
@@ -854,6 +858,19 @@ function renderSidebar() {
 // ────────────────────────────────────────────
 // SELECT
 // ────────────────────────────────────────────
+// Only reorder the top-level entries; keep the currently edited fields intact.
+function moveCategory(catId, delta) {
+  const index = siteData.categories.findIndex(cat => cat.id === catId);
+  const target = index + delta;
+  if (index < 0 || target < 0 || target >= siteData.categories.length) return;
+  const [category] = siteData.categories.splice(index, 1);
+  siteData.categories.splice(target, 0, category);
+  renderSidebar();
+  const status = document.getElementById('save-status');
+  status.className = '';
+  status.textContent = '순서가 변경되었습니다. 저장하기를 눌러 반영하세요.';
+}
+
 function selectCat(catId) {
   selectedCatId = catId;
   selectedSubId = null;
