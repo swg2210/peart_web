@@ -652,8 +652,9 @@
           "projects": [
             {
               "name": "Project 01",
-              "coverPhoto": "./images/wedding-preview/DSC02546.jpg",
+              "coverPhoto": "./images/commercial/dali-interior-01.jpg",
               "photos": [
+                "./images/commercial/dali-interior-01.jpg",
                 "./images/wedding-preview/DSC02546.jpg",
                 "./images/wedding-preview/DSC02216.jpg",
                 "./images/wedding-preview/22FA7B59-0450-4CCA-9E02-85496CA06066.jpg"
